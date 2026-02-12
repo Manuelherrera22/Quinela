@@ -1,24 +1,37 @@
--- 1. Add avatar_url column to users table
-ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
--- 2. Create avatars bucket if it doesn't exist
--- Note: Buckets are usually created via API or Dashboard, but we can try inserting into storage.buckets
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('avatars', 'avatars', true)
-ON CONFLICT (id) DO NOTHING;
+-- 1. Ensure the bucket is public
+UPDATE storage.buckets 
+SET public = true 
+WHERE id = 'avatars';
 
--- 3. Set up RLS policies for avatars bucket
--- Allow public access to view avatars
-CREATE POLICY "Avatar images are publicly accessible" 
+-- 2. Clean up ALL existing policies for storage.objects related to the avatars bucket
+-- This avoids conflicts during development/testing
+DO $$
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE tablename = 'objects' AND schemaname = 'storage') LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON storage.objects';
+    END LOOP;
+END $$;
+
+-- 3. Create ultra-permissive policies for everyone (anon and authenticated)
+-- Since we manage auth manually, Supabase sees all requests as 'anon'
+
+-- Allow anyone to read
+CREATE POLICY "Public Read Access" 
 ON storage.objects FOR SELECT 
 USING ( bucket_id = 'avatars' );
 
--- Allow anyone to upload avatars (since we use custom auth)
-CREATE POLICY "Public can upload avatars" 
+-- Allow anyone to insert
+CREATE POLICY "Public Insert Access" 
 ON storage.objects FOR INSERT 
 WITH CHECK ( bucket_id = 'avatars' );
 
-CREATE POLICY "Public can update avatars" 
-ON storage.objects FOR UPDATE
+-- Allow anyone to update
+CREATE POLICY "Public Update Access" 
+ON storage.objects FOR UPDATE 
 USING ( bucket_id = 'avatars' );
 
+-- Allow anyone to delete (optional, but good for management)
+CREATE POLICY "Public Delete Access" 
+ON storage.objects FOR DELETE 
+USING ( bucket_id = 'avatars' );

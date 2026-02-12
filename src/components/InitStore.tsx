@@ -9,13 +9,7 @@ export function InitStore() {
     const user = useStore((state) => state.user);
 
     useEffect(() => {
-        fetchInitialData().then(() => {
-            // Restore session from localStorage
-            const savedEmail = localStorage.getItem("quiniela_user_email");
-            if (savedEmail && !useStore.getState().user) {
-                loginUser(savedEmail);
-            }
-        });
+        fetchInitialData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

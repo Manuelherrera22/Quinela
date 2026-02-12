@@ -181,82 +181,119 @@ export const useStore = create<AppState>((set, get) => ({
     fetchInitialData: async () => {
         set({ isLoading: true });
 
-        // 1. Fetch Matches
-        let { data: matches, error: matchesError } = await supabase
-            .from('matches')
-            .select('*')
-            .order('date', { ascending: true });
-
-        if (matchesError) {
-            console.error('Error fetching matches:', matchesError);
-            toast.error('Error al cargar partidos. Revisa tu conexión.');
-        }
-
-        // Seed matches if empty (first run)
-        if (!matches || matches.length === 0) {
-            console.log('Seeding matches...');
-            const { error: seedError } = await supabase
+        try {
+            // 1. Fetch Matches
+            let { data: matches, error: matchesError } = await supabase
                 .from('matches')
-                .insert(INITIAL_MATCHES.map(m => ({
-                    id: m.id,
-                    home_team: m.homeTeam,
-                    away_team: m.awayTeam,
-                    home_flag: m.homeFlag,
-                    away_flag: m.awayFlag,
-                    date: m.date,
-                    stage: m.stage,
-                    group_name: m.group,
-                    status: m.status,
-                    home_score: m.homeScore,
-                    away_score: m.awayScore
-                })));
+                .select('*')
+                .order('date', { ascending: true });
 
-            if (!seedError) {
-                // Fetch again
-                const res = await supabase.from('matches').select('*').order('date', { ascending: true });
-                matches = res.data;
-            } else {
-                console.error('Error seeding matches:', seedError);
+            if (matchesError) {
+                console.error('Error fetching matches:', matchesError);
+                toast.error('Error al cargar partidos. Revisa tu conexión.');
             }
+
+            // Seed matches if empty (first run)
+            if (!matches || matches.length === 0) {
+                console.log('Seeding matches...');
+                const { error: seedError } = await supabase
+                    .from('matches')
+                    .insert(INITIAL_MATCHES.map(m => ({
+                        id: m.id,
+                        home_team: m.homeTeam,
+                        away_team: m.awayTeam,
+                        home_flag: m.homeFlag,
+                        away_flag: m.awayFlag,
+                        date: m.date,
+                        stage: m.stage,
+                        group_name: m.group,
+                        status: m.status,
+                        home_score: m.homeScore,
+                        away_score: m.awayScore
+                    })));
+
+                if (!seedError) {
+                    const res = await supabase.from('matches').select('*').order('date', { ascending: true });
+                    matches = res.data;
+                }
+            }
+
+            const mappedMatches = (matches || []).map((m: any) => ({
+                id: m.id,
+                homeTeam: m.home_team,
+                awayTeam: m.away_team,
+                homeFlag: m.home_flag,
+                awayFlag: m.away_flag,
+                date: m.date,
+                stage: m.stage,
+                group: m.group_name,
+                status: m.status,
+                homeScore: m.home_score,
+                awayScore: m.away_score
+            }));
+
+            // 2. Fetch Users
+            const { data: users } = await supabase
+                .from('users')
+                .select('*')
+                .order('points', { ascending: false });
+
+            const mappedUsers = (users || []).map((u: any) => ({
+                name: u.name,
+                country: u.country,
+                email: u.email,
+                points: u.points,
+                exactMatches: u.exact_matches,
+                selectedChampion: u.selected_champion,
+                avatarUrl: u.avatar_url,
+                password: u.password
+            }));
+
+            // 3. Fetch Settings
+            const { data: settingsData } = await supabase.from('settings').select('*');
+            const championSetting = settingsData?.find((s: any) => s.key === 'champion')?.value || null;
+
+            // 4. Restore Session (if exists)
+            const savedEmail = typeof window !== 'undefined' ? localStorage.getItem('quiniela_user_email') : null;
+            if (savedEmail) {
+                const user = (users || []).find((u: any) => u.email === savedEmail);
+                if (user) {
+                    const mappedUser: User = {
+                        name: user.name,
+                        country: user.country,
+                        email: user.email,
+                        points: user.points,
+                        exactMatches: user.exact_matches,
+                        selectedChampion: user.selected_champion,
+                        avatarUrl: user.avatar_url,
+                        password: user.password
+                    };
+
+                    const { data: predictions } = await supabase
+                        .from('predictions')
+                        .select('*')
+                        .eq('user_email', savedEmail);
+
+                    const mappedPredictions = (predictions || []).map((p: any) => ({
+                        matchId: p.match_id,
+                        homeScore: p.home_score,
+                        awayScore: p.away_score
+                    }));
+
+                    set({ user: mappedUser, predictions: mappedPredictions });
+                }
+            }
+
+            set({
+                matches: mappedMatches,
+                users: mappedUsers,
+                settings: { champion: championSetting },
+                isLoading: false
+            });
+        } catch (error) {
+            console.error('Error during initial data fetch:', error);
+            set({ isLoading: false });
         }
-
-        // Map DB matches to App matches
-        const mappedMatches = (matches || []).map((m: any) => ({
-            id: m.id,
-            homeTeam: m.home_team,
-            awayTeam: m.away_team,
-            homeFlag: m.home_flag,
-            awayFlag: m.away_flag,
-            date: m.date,
-            stage: m.stage,
-            group: m.group_name,
-            status: m.status,
-            homeScore: m.home_score,
-            awayScore: m.away_score
-        }));
-
-        // 2. Fetch Users (for leaderboard)
-        const { data: users, error: usersError } = await supabase
-            .from('users')
-            .select('*')
-            .order('points', { ascending: false });
-
-        const mappedUsers = (users || []).map((u: any) => ({
-            name: u.name,
-            country: u.country,
-            email: u.email,
-            points: u.points,
-            exactMatches: u.exact_matches,
-            selectedChampion: u.selected_champion,
-            avatarUrl: u.avatar_url,
-            password: u.password // Keeping for now as per plan
-        }));
-
-        // 3. Fetch Settings (Champion)
-        const { data: settingsData } = await supabase.from('settings').select('*');
-        const championSetting = settingsData?.find((s: any) => s.key === 'champion')?.value || null;
-
-        set({ matches: mappedMatches, users: mappedUsers, settings: { champion: championSetting }, isLoading: false });
     },
 
     registerUser: async (name, country, email, password) => {
