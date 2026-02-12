@@ -319,7 +319,7 @@ export const useStore = create<AppState>((set, get) => ({
 
         // Save session to localStorage
         if (typeof window !== 'undefined') {
-            localStorage.setItem('quinela_user_email', email);
+            localStorage.setItem('quiniela_user_email', email);
         }
 
         set({ user: mappedUser, predictions: mappedPredictions });
@@ -328,7 +328,7 @@ export const useStore = create<AppState>((set, get) => ({
 
     logoutUser: () => {
         if (typeof window !== 'undefined') {
-            localStorage.removeItem('quinela_user_email');
+            localStorage.removeItem('quiniela_user_email');
         }
         set({ user: null, predictions: [] });
     },

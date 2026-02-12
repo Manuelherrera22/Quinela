@@ -11,7 +11,7 @@ export function InitStore() {
     useEffect(() => {
         fetchInitialData().then(() => {
             // Restore session from localStorage
-            const savedEmail = localStorage.getItem("quinela_user_email");
+            const savedEmail = localStorage.getItem("quiniela_user_email");
             if (savedEmail && !useStore.getState().user) {
                 loginUser(savedEmail);
             }

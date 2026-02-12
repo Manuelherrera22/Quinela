@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Quinela Tigo - Copa Mundial 2026",
-  description: "Predice los resultados del Mundial 2026 y gana premios increíbles.",
+  title: "Quiniela Tigo",
+  description: "Participa y gana en la Quiniela Tigo",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Quinela Tigo",
+    title: "Quiniela Tigo",
   },
   icons: {
     icon: "/icon-192.png",
