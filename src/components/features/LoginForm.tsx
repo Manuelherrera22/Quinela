@@ -6,12 +6,11 @@ import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import bcrypt from 'bcryptjs';
+import { AppState } from "@/lib/store/types";
 
 export function LoginForm() {
     const router = useRouter();
-    const loginUser = useStore((state) => state.loginUser);
-    const users = useStore((state) => state.users);
+    const loginUser = useStore((state: AppState) => state.loginUser);
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -30,52 +29,32 @@ export function LoginForm() {
         setIsLoading(true);
 
         try {
-            const user = users.find(u => u.email === email);
+            const success = await loginUser(email, password);
 
-            if (!user) {
-                setError("No encontramos una cuenta con este correo.");
+            if (!success) {
+                setError("Correo o contraseña incorrectos.");
                 setIsLoading(false);
                 return;
             }
 
-            if (!user.password) {
-                setError("Contraseña incorrecta.");
-                setIsLoading(false);
-                return;
-            }
-
-            // Support both hashed (bcrypt) and legacy plaintext passwords
-            const isHashed = user.password.startsWith('$2');
-            let passwordValid = false;
-
-            if (isHashed) {
-                passwordValid = await bcrypt.compare(password, user.password);
-            } else {
-                passwordValid = user.password === password;
-            }
-
-            if (!passwordValid) {
-                setError("Contraseña incorrecta.");
-                setIsLoading(false);
-                return;
-            }
-
-            await loginUser(email);
             router.push("/dashboard");
-        } catch {
+        } catch (err: any) {
+            console.error('Login error:', err);
             setError("Error al iniciar sesión. Intenta de nuevo.");
             setIsLoading(false);
         }
     };
 
     return (
-        <Card className="w-full max-w-md p-6 bg-white/90 backdrop-blur-sm shadow-xl border-0">
-            <h2 className="text-2xl font-bold text-center text-[#00377B] mb-6">INICIAR SESIÓN</h2>
+        <Card className="w-full max-w-md p-6 glass backdrop-blur shadow-2xl border-0 animate-fade-in">
+            <h2 className="text-2xl font-bold text-center text-white mb-6 uppercase tracking-widest">
+                Iniciar Sesión
+            </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CORREO:
+                    <label className="block text-xs font-bold text-gray-300 mb-1 tracking-tighter">
+                        CORREO ELECTRÓNICO
                     </label>
                     <Input
                         type="email"
@@ -84,13 +63,13 @@ export function LoginForm() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="tucorreo@ejemplo.com"
-                        className="border-gray-300 focus:border-[#00377B] focus:ring-[#00377B]"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-accent focus:ring-accent"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CONTRASEÑA:
+                    <label className="block text-xs font-bold text-gray-300 mb-1 tracking-tighter">
+                        CONTRASEÑA
                     </label>
                     <Input
                         type="password"
@@ -99,26 +78,26 @@ export function LoginForm() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="********"
-                        className="border-gray-300 focus:border-[#00377B] focus:ring-[#00377B]"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-accent focus:ring-accent"
                     />
                 </div>
 
-                {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+                {error && <p className="text-red-400 text-sm font-medium animate-pulse">{error}</p>}
 
                 <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-[#00377B] hover:bg-[#002a5e] text-white font-bold py-6 text-lg mt-4 disabled:opacity-50"
+                    className="w-full bg-accent hover:bg-yellow-500 text-primary font-black py-6 text-lg mt-4 disabled:opacity-50 transition-all active:scale-95 shadow-[0_0_20px_rgba(250,204,21,0.3)]"
                 >
                     {isLoading ? 'CARGANDO...' : 'ENTRAR'}
                 </Button>
 
-                <div className="text-center mt-4 text-sm text-gray-600">
+                <div className="text-center mt-6 text-sm text-gray-400">
                     ¿No tienes cuenta?{" "}
                     <button
                         type="button"
                         onClick={() => router.push("/register")}
-                        className="text-[#00377B] font-bold hover:underline"
+                        className="text-accent font-bold hover:underline"
                     >
                         Regístrate aquí
                     </button>

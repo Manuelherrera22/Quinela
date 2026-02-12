@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import Image from "next/image";
+import { AppState } from "@/lib/store/types";
 
 export function RegistrationForm() {
     const router = useRouter();
-    const registerUser = useStore((state) => state.registerUser);
-    const users = useStore((state) => state.users);
+    const registerUser = useStore((state: AppState) => state.registerUser);
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -31,21 +31,13 @@ export function RegistrationForm() {
             return;
         }
 
-        // Email duplicate validation
-        const emailExists = users.some(u => u.email === email);
-        if (emailExists) {
-            setError("Ya existe una cuenta con este correo electrónico.");
-            return;
-        }
-
-        // Password confirmation
         if (password !== confirmPassword) {
             setError("Las contraseñas no coinciden.");
             return;
         }
 
-        if (password.length < 4) {
-            setError("La contraseña debe tener al menos 4 caracteres.");
+        if (password.length < 6) {
+            setError("La contraseña debe tener al menos 6 caracteres.");
             return;
         }
 
@@ -53,20 +45,23 @@ export function RegistrationForm() {
         try {
             await registerUser(name, country, email, password);
             router.push("/champion");
-        } catch {
-            setError("Error al registrar. Intenta de nuevo.");
+        } catch (err: any) {
+            console.error('Registration error:', err);
+            setError(err.message || "Error al registrar. Intenta de nuevo.");
             setIsLoading(false);
         }
     };
 
     return (
-        <Card className="w-full max-w-md p-6 bg-white/90 backdrop-blur-sm shadow-xl border-0">
-            <h2 className="text-2xl font-bold text-center text-[#00377B] mb-6">REGISTROS</h2>
+        <Card className="w-full max-w-md p-6 glass backdrop-blur shadow-2xl border-0 animate-fade-in mb-20">
+            <h2 className="text-2xl font-bold text-center text-white mb-6 uppercase tracking-widest">
+                Crear Cuenta
+            </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        NOMBRE:
+                    <label className="block text-xs font-bold text-gray-300 mb-1 tracking-tighter">
+                        NOMBRE COMPLETO
                     </label>
                     <Input
                         type="text"
@@ -75,13 +70,13 @@ export function RegistrationForm() {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Tu nombre completo"
-                        className="border-gray-300 focus:border-[#00377B] focus:ring-[#00377B]"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-accent focus:ring-accent"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        PAÍS:
+                    <label className="block text-xs font-bold text-gray-300 mb-1 tracking-tighter">
+                        PAÍS DE ORIGEN
                     </label>
                     <div className="flex items-center gap-3">
                         <div className="relative w-8 h-5 shrink-0 shadow-sm rounded-sm overflow-hidden">
@@ -100,10 +95,10 @@ export function RegistrationForm() {
                             name="country"
                             autoComplete="country-name"
                             onChange={(e) => setCountry(e.target.value)}
-                            className="flex h-10 w-full rounded-md border border-gray-300 bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00377B] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all"
                         >
                             {REGISTRATION_COUNTRIES.map((c) => (
-                                <option key={c} value={c}>
+                                <option key={c} value={c} className="bg-[#002a5e]">
                                     {c}
                                 </option>
                             ))}
@@ -112,8 +107,8 @@ export function RegistrationForm() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CORREO:
+                    <label className="block text-xs font-bold text-gray-300 mb-1 tracking-tighter">
+                        CORREO INSTITUCIONAL
                     </label>
                     <Input
                         type="email"
@@ -122,13 +117,13 @@ export function RegistrationForm() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="tucorreo@ejemplo.com"
-                        className="border-gray-300 focus:border-[#00377B] focus:ring-[#00377B]"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-accent focus:ring-accent"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CONTRASEÑA:
+                    <label className="block text-xs font-bold text-gray-300 mb-1 tracking-tighter">
+                        CONTRASEÑA
                     </label>
                     <Input
                         type="password"
@@ -136,14 +131,14 @@ export function RegistrationForm() {
                         autoComplete="new-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Mínimo 4 caracteres"
-                        className="border-gray-300 focus:border-[#00377B] focus:ring-[#00377B]"
+                        placeholder="Mínimo 6 caracteres"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-accent focus:ring-accent"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CONFIRMAR CONTRASEÑA:
+                    <label className="block text-xs font-bold text-gray-300 mb-1 tracking-tighter">
+                        CONFIRMAR CONTRASEÑA
                     </label>
                     <Input
                         type="password"
@@ -152,26 +147,26 @@ export function RegistrationForm() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Repite tu contraseña"
-                        className="border-gray-300 focus:border-[#00377B] focus:ring-[#00377B]"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-accent focus:ring-accent"
                     />
                 </div>
 
-                {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+                {error && <p className="text-red-400 text-sm font-medium animate-pulse">{error}</p>}
 
                 <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-[#00377B] hover:bg-[#002a5e] text-white font-bold py-6 text-lg mt-4 disabled:opacity-50"
+                    className="w-full bg-accent hover:bg-yellow-500 text-primary font-black py-6 text-lg mt-4 disabled:opacity-50 transition-all active:scale-95 shadow-[0_0_20px_rgba(250,204,21,0.3)]"
                 >
                     {isLoading ? 'REGISTRANDO...' : 'REGISTRARSE'}
                 </Button>
 
-                <div className="text-center mt-4 text-sm text-gray-600">
+                <div className="text-center mt-6 text-sm text-gray-400">
                     ¿Ya tienes cuenta?{" "}
                     <button
                         type="button"
                         onClick={() => router.push("/login")}
-                        className="text-[#00377B] font-bold hover:underline"
+                        className="text-accent font-bold hover:underline"
                     >
                         Inicia sesión
                     </button>

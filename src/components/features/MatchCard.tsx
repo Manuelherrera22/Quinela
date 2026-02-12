@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { Match, Prediction } from "@/types";
 import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { cn, vibrate } from "@/lib/utils";
 import { COUNTRY_FLAG_MAP } from "@/lib/constants";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { AppState } from "@/lib/store/types";
 
 interface MatchCardProps {
     match: Match;
@@ -37,7 +38,7 @@ function useCountdown(targetDate: string) {
         setTimeLeft(calculateTimeLeft());
         const interval = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
-        }, 60000); // Update every minute
+        }, 60000);
 
         return () => clearInterval(interval);
     }, [targetDate]);
@@ -46,11 +47,10 @@ function useCountdown(targetDate: string) {
 }
 
 export function MatchCard({ match }: MatchCardProps) {
-    const submitPrediction = useStore((state) => state.submitPrediction);
-    const predictions = useStore((state) => state.predictions);
+    const submitPrediction = useStore((state: AppState) => state.submitPrediction);
+    const predictions = useStore((state: AppState) => state.predictions);
     const countdown = useCountdown(match.date);
 
-    // Find existing prediction
     const existingPrediction = predictions.find((p) => p.matchId === match.id);
 
     const [homeScore, setHomeScore] = useState<string>(
@@ -61,7 +61,6 @@ export function MatchCard({ match }: MatchCardProps) {
     );
     const [isEditing, setIsEditing] = useState(!existingPrediction);
 
-    // Update local state if prediction changes externally (unlikely but good practice)
     useEffect(() => {
         if (existingPrediction) {
             setHomeScore(existingPrediction.homeScore.toString());
@@ -72,14 +71,12 @@ export function MatchCard({ match }: MatchCardProps) {
 
     const handleSave = () => {
         if (homeScore === "" || awayScore === "") return;
-
         submitPrediction(match.id, parseInt(homeScore), parseInt(awayScore));
         setIsEditing(false);
     };
 
     const isLocked = match.status !== "open";
 
-    // Determine prediction result for finished matches
     const getPredictionResult = () => {
         if (match.status !== 'finished' || !existingPrediction || match.homeScore === undefined || match.awayScore === undefined) {
             return null;
@@ -98,7 +95,7 @@ export function MatchCard({ match }: MatchCardProps) {
         const realWinner = realHome > realAway ? 'home' : (realHome < realAway ? 'away' : 'draw');
 
         if (predWinner === realWinner) {
-            return { type: 'correct', points: 3, label: 'Resultado correcto +3 pts', color: 'text-yellow-400' };
+            return { type: 'correct', points: 3, label: 'Resultado +3 pts', color: 'text-yellow-400' };
         }
 
         return { type: 'miss', points: 0, label: 'No acertaste', color: 'text-red-400' };
@@ -107,183 +104,188 @@ export function MatchCard({ match }: MatchCardProps) {
     const predictionResult = getPredictionResult();
 
     return (
-        <Card className="mb-4 bg-white/10 border-none text-white overflow-hidden">
-            {/* Header with Date/Info */}
-            <div className="bg-white/5 p-2 text-xs text-center uppercase tracking-wider text-blue-200 flex items-center justify-center gap-2">
-                <span>
-                    {new Date(match.date).toLocaleDateString("es-ES", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                    })}{" "}
-                    - {(match as any).group ? `GRUPO ${(match as any).group}` : match.stage}
-                </span>
-                {match.status === 'open' && countdown && (
-                    <span className="bg-yellow-400/20 text-yellow-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                        ⏱ {countdown}
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+        >
+            <Card className="mb-4 glass border-none text-white overflow-hidden shadow-2xl">
+                <div className="bg-white/5 p-2 text-[10px] text-center uppercase tracking-widest text-blue-200 flex items-center justify-center gap-2">
+                    <span className="font-bold">
+                        {new Date(match.date).toLocaleDateString("es-ES", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                        })} - {match.group ? `GRUPO ${match.group}` : match.stage}
                     </span>
-                )}
-                {match.status === 'locked' && match.homeScore === undefined && (
-                    <span className="bg-red-500/30 text-red-300 px-2 py-0.5 rounded-full text-[10px] font-bold animate-pulse">
-                        🔴 EN VIVO
-                    </span>
-                )}
-            </div>
-
-            <div className="p-3 sm:p-4 flex items-center justify-between gap-1 sm:gap-2">
-                {/* Home Team */}
-                <div className="flex flex-col items-center w-[30%] sm:w-1/3">
-                    <div className="relative w-8 h-6 sm:w-12 sm:h-8 mb-1 sm:mb-2 shadow-sm">
-                        {COUNTRY_FLAG_MAP[match.homeTeam] ? (
-                            <Image
-                                src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[match.homeTeam]}.png`}
-                                alt={match.homeTeam}
-                                fill
-                                sizes="48px"
-                                className="object-cover rounded-[2px]"
-                            />
-                        ) : <span className="text-xl sm:text-2xl">🏳️</span>}
-                    </div>
-                    <span className="text-[10px] sm:text-sm font-bold text-center leading-tight line-clamp-2 h-[2.5em] flex items-center justify-center">
-                        {match.homeTeam}
-                    </span>
+                    {match.status === 'open' && countdown && (
+                        <span className="bg-yellow-400 text-[#00377B] px-2 py-0.5 rounded-full text-[9px] font-black">
+                            {countdown}
+                        </span>
+                    )}
+                    {match.status === 'locked' && match.homeScore === undefined && (
+                        <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-[9px] font-black animate-pulse">
+                            VIVO
+                        </span>
+                    )}
                 </div>
 
-                {/* Score Inputs / Display */}
-                <div className="flex flex-col items-center w-[40%] sm:w-1/3 space-y-1 sm:space-y-2">
-                    <div className="flex items-center justify-center gap-1 sm:gap-3">
-                        {/* Home Score Stepper */}
-                        <div className="flex flex-col items-center">
-                            {isEditing && !isLocked && (
-                                <button
-                                    onClick={() => {
-                                        setHomeScore(String(Math.min(99, parseInt(homeScore || '0') + 1)));
-                                        vibrate(10);
-                                    }}
-                                    className="w-8 h-6 sm:w-10 sm:h-7 bg-yellow-400 text-[#00377B] rounded-t-lg font-bold text-base sm:text-lg leading-none hover:bg-yellow-300 active:scale-95 transition-all touch-manipulation"
-                                >+</button>
-                            )}
-                            <div className={cn(
-                                "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-lg sm:text-xl font-bold rounded-md transition-colors",
-                                isEditing && !isLocked ? "bg-white text-black" : "bg-white/20 text-white"
-                            )}>
-                                {homeScore || '–'}
-                            </div>
-                            {isEditing && !isLocked && (
-                                <button
-                                    onClick={() => {
-                                        setHomeScore(String(Math.max(0, parseInt(homeScore || '0') - 1)));
-                                        vibrate(10);
-                                    }}
-                                    className="w-8 h-6 sm:w-10 sm:h-7 bg-white/20 text-white rounded-b-lg font-bold text-base sm:text-lg leading-none hover:bg-white/30 active:scale-95 transition-all touch-manipulation"
-                                >−</button>
-                            )}
+                <div className="p-4 flex items-center justify-between gap-2">
+                    {/* Home Team */}
+                    <div className="flex flex-col items-center w-[30%]">
+                        <div className="relative w-10 h-7 mb-2 shadow-lg rounded-sm overflow-hidden border border-white/10">
+                            {COUNTRY_FLAG_MAP[match.homeTeam] ? (
+                                <Image
+                                    src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[match.homeTeam]}.png`}
+                                    alt={match.homeTeam}
+                                    fill
+                                    sizes="40px"
+                                    className="object-cover"
+                                />
+                            ) : <span className="text-xl">🏳️</span>}
                         </div>
+                        <span className="text-[11px] font-bold text-center leading-tight h-[2.5em] flex items-center justify-center">
+                            {match.homeTeam}
+                        </span>
+                    </div>
 
-                        <span className="text-lg sm:text-xl font-bold opacity-50">-</span>
-
-                        {/* Away Score Stepper */}
-                        <div className="flex flex-col items-center">
-                            {isEditing && !isLocked && (
-                                <button
-                                    onClick={() => {
-                                        setAwayScore(String(Math.min(99, parseInt(awayScore || '0') + 1)));
-                                        vibrate(10);
-                                    }}
-                                    className="w-8 h-6 sm:w-10 sm:h-7 bg-yellow-400 text-[#00377B] rounded-t-lg font-bold text-base sm:text-lg leading-none hover:bg-yellow-300 active:scale-95 transition-all touch-manipulation"
-                                >+</button>
-                            )}
-                            <div className={cn(
-                                "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-lg sm:text-xl font-bold rounded-md transition-colors",
-                                isEditing && !isLocked ? "bg-white text-black" : "bg-white/20 text-white"
-                            )}>
-                                {awayScore || '–'}
+                    {/* Scores */}
+                    <div className="flex flex-col items-center w-[40%]">
+                        <div className="flex items-center justify-center gap-2 sm:gap-4">
+                            {/* Home Score */}
+                            <div className="flex flex-col items-center">
+                                <AnimatePresence>
+                                    {isEditing && !isLocked && (
+                                        <motion.button
+                                            initial={{ opacity: 0, y: 5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 5 }}
+                                            onClick={() => { setHomeScore(String(Math.min(99, parseInt(homeScore || '0') + 1))); vibrate(10); }}
+                                            className="w-8 h-6 bg-accent text-primary rounded-t-lg font-black hover:bg-yellow-300 active:scale-90 transition-all"
+                                        >+</motion.button>
+                                    )}
+                                </AnimatePresence>
+                                <div className={cn(
+                                    "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl font-black rounded-lg transition-all shadow-inner",
+                                    isEditing && !isLocked ? "bg-white text-primary scale-110 shadow-accent/20" : "bg-black/40 text-white/50"
+                                )}>
+                                    {homeScore || '0'}
+                                </div>
+                                <AnimatePresence>
+                                    {isEditing && !isLocked && (
+                                        <motion.button
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -5 }}
+                                            onClick={() => { setHomeScore(String(Math.max(0, parseInt(homeScore || '0') - 1))); vibrate(10); }}
+                                            className="w-8 h-6 bg-white/20 text-white rounded-b-lg font-black hover:bg-white/30 active:scale-90 transition-all"
+                                        >−</motion.button>
+                                    )}
+                                </AnimatePresence>
                             </div>
-                            {isEditing && !isLocked && (
-                                <button
-                                    onClick={() => {
-                                        setAwayScore(String(Math.max(0, parseInt(awayScore || '0') - 1)));
-                                        vibrate(10);
-                                    }}
-                                    className="w-8 h-6 sm:w-10 sm:h-7 bg-white/20 text-white rounded-b-lg font-bold text-base sm:text-lg leading-none hover:bg-white/30 active:scale-95 transition-all touch-manipulation"
-                                >−</button>
-                            )}
+
+                            <span className="text-xl font-black text-accent/50">VS</span>
+
+                            {/* Away Score */}
+                            <div className="flex flex-col items-center">
+                                <AnimatePresence>
+                                    {isEditing && !isLocked && (
+                                        <motion.button
+                                            initial={{ opacity: 0, y: 5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 5 }}
+                                            onClick={() => { setAwayScore(String(Math.min(99, parseInt(awayScore || '0') + 1))); vibrate(10); }}
+                                            className="w-8 h-6 bg-accent text-primary rounded-t-lg font-black hover:bg-yellow-300 active:scale-90 transition-all"
+                                        >+</motion.button>
+                                    )}
+                                </AnimatePresence>
+                                <div className={cn(
+                                    "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl font-black rounded-lg transition-all shadow-inner",
+                                    isEditing && !isLocked ? "bg-white text-primary scale-110 shadow-accent/20" : "bg-black/40 text-white/50"
+                                )}>
+                                    {awayScore || '0'}
+                                </div>
+                                <AnimatePresence>
+                                    {isEditing && !isLocked && (
+                                        <motion.button
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -5 }}
+                                            onClick={() => { setAwayScore(String(Math.max(0, parseInt(awayScore || '0') - 1))); vibrate(10); }}
+                                            className="w-8 h-6 bg-white/20 text-white rounded-b-lg font-black hover:bg-white/30 active:scale-90 transition-all"
+                                        >−</motion.button>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Away Team */}
-                <div className="flex flex-col items-center w-[30%] sm:w-1/3">
-                    <div className="relative w-8 h-6 sm:w-12 sm:h-8 mb-1 sm:mb-2 shadow-sm">
-                        {COUNTRY_FLAG_MAP[match.awayTeam] ? (
-                            <Image
-                                src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[match.awayTeam]}.png`}
-                                alt={match.awayTeam}
-                                fill
-                                sizes="48px"
-                                className="object-cover rounded-[2px]"
-                            />
-                        ) : <span className="text-xl sm:text-2xl">🏳️</span>}
+                    {/* Away Team */}
+                    <div className="flex flex-col items-center w-[30%]">
+                        <div className="relative w-10 h-7 mb-2 shadow-lg rounded-sm overflow-hidden border border-white/10">
+                            {COUNTRY_FLAG_MAP[match.awayTeam] ? (
+                                <Image
+                                    src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[match.awayTeam]}.png`}
+                                    alt={match.awayTeam}
+                                    fill
+                                    sizes="40px"
+                                    className="object-cover"
+                                />
+                            ) : <span className="text-xl">🏳️</span>}
+                        </div>
+                        <span className="text-[11px] font-bold text-center leading-tight h-[2.5em] flex items-center justify-center">
+                            {match.awayTeam}
+                        </span>
                     </div>
-                    <span className="text-[10px] sm:text-sm font-bold text-center leading-tight line-clamp-2 h-[2.5em] flex items-center justify-center">
-                        {match.awayTeam}
-                    </span>
                 </div>
-            </div>
 
-            {/* Footer Actions */}
-            <div className="px-4 pb-4 flex justify-center">
-                {!isLocked ? (
-                    isEditing ? (
+                {/* Footer Controls */}
+                <div className="px-4 pb-4 flex justify-center">
+                    {!isLocked ? (
                         <Button
-                            onClick={handleSave}
-                            className="bg-yellow-400 hover:bg-yellow-500 text-[#00377B] font-bold rounded-full w-32"
+                            onClick={isEditing ? handleSave : () => setIsEditing(true)}
+                            className={cn(
+                                "rounded-full font-black px-8 transition-all active:scale-95",
+                                isEditing ? "bg-accent text-primary shadow-lg shadow-accent/20" : "bg-white/10 text-accent border border-accent/30 hover:bg-white/20"
+                            )}
                         >
-                            GUARDAR
+                            {isEditing ? 'CONFIRMAR' : 'EDITAR'}
                         </Button>
                     ) : (
-                        <Button
-                            onClick={() => setIsEditing(true)}
-                            variant="ghost"
-                            className="text-yellow-400 hover:text-yellow-300 hover:bg-white/10 border border-yellow-400 rounded-full w-32"
-                        >
-                            EDITAR
-                        </Button>
-                    )
-                ) : (
-                    <div className="flex flex-col items-center w-full">
-                        <div className="text-xs text-gray-400 uppercase font-bold mb-1">
-                            {match.status === 'finished' ? 'Finalizado' : 'Cerrado - Jugando'}
-                        </div>
-                        {match.status === 'finished' && (
-                            <>
-                                <div className="text-xl font-bold text-yellow-400">
-                                    {match.homeScore} - {match.awayScore}
-                                </div>
-                                {/* Show user prediction vs result */}
-                                {existingPrediction && predictionResult && (
-                                    <div className="mt-2 text-center w-full bg-white/5 rounded-lg py-2 px-3">
-                                        <div className="text-[10px] text-gray-400 uppercase mb-1">Tu predicción</div>
-                                        <div className="flex items-center justify-center gap-2">
-                                            <span className="text-sm font-bold text-white/80">
-                                                {existingPrediction.homeScore} - {existingPrediction.awayScore}
-                                            </span>
-                                            <span className={cn("text-xs font-bold", predictionResult.color)}>
-                                                {predictionResult.label}
-                                            </span>
+                        <div className="flex flex-col items-center w-full">
+                            {match.status === 'finished' && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-center w-full"
+                                >
+                                    <div className="text-xl font-black text-accent mb-2">
+                                        {match.homeScore} - {match.awayScore}
+                                    </div>
+                                    {existingPrediction && predictionResult && (
+                                        <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+                                            <div className="text-[9px] font-bold text-white/40 uppercase mb-1">Tu Predicción</div>
+                                            <div className="flex items-center justify-center gap-3">
+                                                <span className="text-sm font-black text-white/90">
+                                                    {existingPrediction.homeScore} - {existingPrediction.awayScore}
+                                                </span>
+                                                <span className={cn("text-[10px] font-black uppercase tracking-tighter", predictionResult.color)}>
+                                                    {predictionResult.label}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                                {!existingPrediction && (
-                                    <div className="mt-2 text-[10px] text-gray-500 italic">
-                                        No hiciste predicción
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                )}
-            </div>
-        </Card>
+                                    )}
+                                </motion.div>
+                            )}
+                            {match.status === 'locked' && match.homeScore === undefined && (
+                                <div className="text-xs font-bold text-red-400 animate-pulse tracking-widest uppercase">
+                                    Partido en progreso
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </Card>
+        </motion.div>
     );
 }

@@ -13,13 +13,17 @@ import { Match } from "@/types";
 import { GROUPS } from "@/lib/constants";
 import { BottomNav } from "@/components/BottomNav";
 import { vibrate } from "@/lib/utils";
-import { LayoutGrid, Swords, Flame, Medal, Crown } from "lucide-react";
+import { LayoutGrid, Swords, Flame, Medal, Crown, LogOut, User, BarChart } from "lucide-react";
+import { AppState } from "@/lib/store/types";
 
 export default function DashboardPage() {
     const router = useRouter();
-    const user = useStore((state) => state.user);
-    const matches = useStore((state) => state.matches);
-    const users = useStore((state) => state.users);
+    const user = useStore((state: AppState) => state.user);
+    const matches = useStore((state: AppState) => state.matches);
+    const users = useStore((state: AppState) => state.users);
+
+    // Tipado explícito para evitar errores de 'any'
+    const logoutUser = useStore((state: AppState) => state.logoutUser);
 
     const [activeTab, setActiveTab] = useState("matches");
     const [selectedGroup, setSelectedGroup] = useState<string>("all");
@@ -86,66 +90,75 @@ export default function DashboardPage() {
     ];
 
     return (
-        <main className="min-h-screen bg-[#00377B] pb-20">
+        <main className="min-h-screen bg-[#001a3d] pb-24 md:pb-10">
             {/* Header */}
-            <header className="sticky top-0 z-20 bg-[#00377B]/95 backdrop-blur shadow-md">
-                <div className="px-4 py-4 text-center text-white">
-                    <div className="relative w-32 h-10 mx-auto mb-1">
-                        <Image
-                            src="/tigo-logo-1.png"
-                            alt="Tigo Logo"
-                            fill
-                            className="object-contain"
-                            priority
-                        />
-                    </div>
-                    <div className="flex justify-between items-end text-xs opacity-90 px-4 mt-4 relative">
-                        <div className="absolute top-[-3.5rem] right-0 flex items-center space-x-3">
-                            <Link
-                                href="/profile"
-                                className="text-white/60 hover:text-white p-2"
-                                title="Mi Perfil"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="12" cy="7" r="4"></circle>
-                                </svg>
+            <header className="sticky top-0 z-20 bg-[#00377B]/90 backdrop-blur-md shadow-lg border-b border-white/5">
+                <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
+
+                    {/* Logo & Desktop Nav */}
+                    <div className="flex items-center gap-8">
+                        <div className="relative w-28 h-8 md:w-32 md:h-10">
+                            <Image
+                                src="/tigo-logo-1.png"
+                                alt="Tigo Logo"
+                                fill
+                                className="object-contain"
+                                priority
+                            />
+                        </div>
+
+                        {/* Desktop Navigation Links */}
+                        <nav className="hidden md:flex items-center gap-6">
+                            <Link href="/dashboard" className={`text-sm font-bold uppercase tracking-wider hover:text-yellow-400 transition-colors ${activeTab === 'matches' ? 'text-yellow-400' : 'text-white/70'}`} onClick={() => setActiveTab('matches')}>
+                                Partidos
                             </Link>
+                            <Link href="/stats" className="text-sm font-bold uppercase tracking-wider text-white/70 hover:text-yellow-400 transition-colors">
+                                Estadísticas
+                            </Link>
+                        </nav>
+                    </div>
+
+                    {/* Desktop User Menu & Stats */}
+                    <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                        <div className="flex gap-4 text-white text-xs md:text-sm">
+                            <div className="text-center">
+                                <span className="block opacity-60 text-[10px] md:text-xs">JUGADORES</span>
+                                <span className="font-bold">{users.length}</span>
+                            </div>
+                            <div className="text-center">
+                                <span className="block opacity-60 text-[10px] md:text-xs">POSICIÓN</span>
+                                <span className="font-bold">{rankingPosition}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <Link href="/profile" className="flex items-center gap-3 group">
+                                <div className="text-right hidden md:block">
+                                    <div className="text-sm font-bold text-white group-hover:text-yellow-400 transition-colors">{user.name}</div>
+                                    <div className="text-[10px] text-yellow-400 font-bold">{user.points} PTS</div>
+                                </div>
+                                <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-yellow-400/50 group-hover:border-yellow-400 transition-all overflow-hidden bg-[#002a5e]">
+                                    {user.avatarUrl ? (
+                                        <Image src={user.avatarUrl} alt="Avatar" fill className="object-cover" />
+                                    ) : (
+                                        <User className="w-full h-full p-1.5 text-white/50" />
+                                    )}
+                                </div>
+                            </Link>
+
                             <button
-                                onClick={() => useStore.getState().logoutUser()}
-                                className="text-white/60 hover:text-white p-2"
+                                onClick={() => logoutUser()}
+                                className="p-2 text-white/50 hover:text-red-400 hover:bg-white/5 rounded-full transition-colors"
                                 title="Cerrar Sesión"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                    <polyline points="16 17 21 12 16 7"></polyline>
-                                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                                </svg>
+                                <LogOut size={20} />
                             </button>
-                        </div>
-                        <div className="text-left">
-                            <div className="opacity-70">JUGADORES</div>
-                            <div className="font-bold text-lg">{users.length}</div>
-                        </div>
-                        <Link href="/profile" className="flex flex-col items-center cursor-pointer transition-transform hover:scale-105 active:scale-95">
-                            <div className="bg-yellow-400 text-[#00377B] px-4 py-1 rounded-full font-bold shadow-lg transform translate-y-2 z-10 border-2 border-[#00377B]">
-                                {user?.points || 0} PTS
-                            </div>
-                            {user?.exactMatches !== undefined && (
-                                <div className="text-[10px] bg-blue-800 px-2 py-0.5 mt-2 rounded-b-md">
-                                    {user.exactMatches} M.E.
-                                </div>
-                            )}
-                        </Link>
-                        <div className="text-right">
-                            <div className="opacity-70">POSICIONES</div>
-                            <div className="font-bold text-lg">{rankingPosition}</div>
                         </div>
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex justify-center pb-4 mt-6">
+                {/* Mobile Tabs Wrapper */}
+                <div className="md:hidden pb-4 mt-2">
                     <Tabs
                         activeTab={activeTab}
                         onTabChange={setActiveTab}
@@ -158,42 +171,54 @@ export default function DashboardPage() {
                 </div>
             </header>
 
-            {/* Content */}
-            <div className="px-4 pt-6 max-w-md mx-auto">
+            {/* Main Content */}
+            <div className="px-4 pt-6 max-w-md md:max-w-7xl mx-auto transition-all">
+
+                {/* Desktop Tabs/Filter Bar */}
+                <div className="hidden md:flex justify-center mb-8">
+                    <Tabs
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        tabs={[
+                            { id: "ranking", label: "Ranking Global" },
+                            { id: "matches", label: "Mis Predicciones" },
+                            { id: "positions", label: "Tablas de Posiciones" },
+                        ]}
+                        className="bg-black/20"
+                    />
+                </div>
+
                 {activeTab === "matches" && (
-                    <div className="space-y-4">
-                        {/* Stage Filter */}
-                        <div className="flex gap-2 justify-center pb-1 overflow-x-auto scrollbar-hide py-2">
+                    <div className="space-y-6 animate-fade-in">
+                        {/* Stages Filter */}
+                        <div className="flex flex-wrap gap-2 justify-center pb-2">
                             {stages.map(stage => {
                                 const Icon = stage.icon;
                                 const isSelected = selectedStage === stage.id;
                                 return (
                                     <button
                                         key={stage.id}
-                                        onClick={() => {
-                                            setSelectedStage(stage.id);
-                                            vibrate(5);
-                                        }}
-                                        className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${isSelected
-                                            ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-[#00377B] shadow-lg scale-105 ring-2 ring-yellow-400/50'
-                                            : 'bg-white/10 text-white/70 hover:bg-white/20'
+                                        onClick={() => { setSelectedStage(stage.id); vibrate(5); }}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs md:text-sm font-bold transition-all ${isSelected
+                                            ? 'bg-yellow-400 text-[#00377B] shadow-lg shadow-yellow-400/20 scale-105'
+                                            : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                                             }`}
                                     >
-                                        <Icon size={14} strokeWidth={2.5} />
+                                        <Icon size={16} />
                                         {stage.label}
                                     </button>
                                 );
                             })}
                         </div>
 
-                        {/* Group Filter Pills - only for group stage */}
+                        {/* Groups Filter */}
                         {selectedStage === 'group' && (
-                            <div className="flex flex-wrap gap-2 justify-center pb-2">
+                            <div className="flex flex-wrap gap-2 justify-center pb-4">
                                 <button
                                     onClick={() => setSelectedGroup("all")}
-                                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${selectedGroup === "all"
-                                        ? "bg-yellow-400 text-[#00377B] shadow-md"
-                                        : "bg-white/10 text-white/70 hover:bg-white/20"
+                                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${selectedGroup === "all"
+                                        ? "bg-white text-[#00377B]"
+                                        : "bg-white/5 text-white/50 hover:bg-white/10"
                                         }`}
                                 >
                                     TODOS
@@ -202,9 +227,9 @@ export default function DashboardPage() {
                                     <button
                                         key={group}
                                         onClick={() => setSelectedGroup(group)}
-                                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${selectedGroup === group
-                                            ? "bg-yellow-400 text-[#00377B] shadow-md"
-                                            : "bg-white/10 text-white/70 hover:bg-white/20"
+                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${selectedGroup === group
+                                            ? "bg-white text-[#00377B]"
+                                            : "bg-white/5 text-white/50 hover:bg-white/10"
                                             }`}
                                     >
                                         {group}
@@ -213,23 +238,30 @@ export default function DashboardPage() {
                             </div>
                         )}
 
-                        {/* Match Cards grouped by date */}
-                        <div className="space-y-6">
+                        {/* Matches Grid */}
+                        <div className="space-y-8">
                             {Object.entries(groupedMatches).map(([date, groupMatches]) => (
                                 <div key={date}>
-                                    <h3 className="text-white/70 text-sm font-bold uppercase mb-2 pl-2 border-l-4 border-yellow-400">
-                                        {date}
-                                    </h3>
-                                    <div className="space-y-2">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <h3 className="text-white/80 text-lg font-black uppercase tracking-widest">
+                                            {date}
+                                        </h3>
+                                        <div className="h-[1px] flex-1 bg-gradient-to-r from-white/20 to-transparent"></div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         {groupMatches.map(match => (
-                                            <MatchCard key={match.id} match={match} />
+                                            <div key={match.id} className="transform transition-all hover:scale-[1.02]">
+                                                <MatchCard match={match} />
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
                             ))}
                             {Object.keys(groupedMatches).length === 0 && (
-                                <div className="text-center text-white/50 py-10">
-                                    No hay partidos en este grupo
+                                <div className="text-center text-white/40 py-20 flex flex-col items-center">
+                                    <Swords size={48} className="mb-4 opacity-50" />
+                                    <span className="text-lg font-medium">No hay partidos en esta selección</span>
                                 </div>
                             )}
                         </div>
@@ -237,11 +269,13 @@ export default function DashboardPage() {
                 )}
 
                 {activeTab === "ranking" && (
-                    <Leaderboard />
+                    <div className="max-w-4xl mx-auto">
+                        <Leaderboard />
+                    </div>
                 )}
 
                 {activeTab === "positions" && (
-                    <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {GROUPS.map(group => (
                             <StandingsTable
                                 key={group}
@@ -253,7 +287,6 @@ export default function DashboardPage() {
                 )}
             </div>
 
-            {/* Bottom Navigation */}
             <BottomNav />
         </main>
     );

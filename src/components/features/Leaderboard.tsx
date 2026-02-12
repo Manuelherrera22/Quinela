@@ -1,28 +1,24 @@
-"use client";
-
 import { useStore } from "@/lib/store";
-import { User } from "@/types";
+import { AppState } from "@/lib/store/types";
 import { Card } from "@/components/ui/Card";
 import { useMemo, useState } from "react";
 import { COUNTRY_FLAG_MAP } from "@/lib/constants";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 export function Leaderboard() {
-    const currentUser = useStore((state) => state.user);
-    const users = useStore((state) => state.users);
+    const currentUser = useStore((state: AppState) => state.user);
+    const users = useStore((state: AppState) => state.users);
 
     const [filter, setFilter] = useState<"global" | "local">("global");
 
     const sortedUsers = useMemo(() => {
         let filteredUsers = [...users];
 
-        // Filter users based on selection
         if (filter === "local" && currentUser?.country) {
             filteredUsers = filteredUsers.filter(u => u.country === currentUser.country);
         }
 
-        // Sort by points descending
-        // Tie-breaker: Exact Matches (desc) -> Name (asc)
         filteredUsers.sort((a, b) => {
             if (b.points !== a.points) {
                 return b.points - a.points;
@@ -37,67 +33,74 @@ export function Leaderboard() {
     }, [users, currentUser, filter]);
 
     return (
-        <div className="space-y-4">
-            {/* Filter Tabs */}
-            <div className="flex bg-[#002a5e] p-1 rounded-lg">
+        <div className="space-y-4 animate-fade-in mb-24">
+            <div className="flex bg-black/20 p-1 rounded-xl backdrop-blur-sm border border-white/5">
                 <button
                     onClick={() => setFilter("global")}
-                    className={`flex-1 py-1 text-xs font-bold rounded-md transition-all ${filter === "global"
-                        ? "bg-yellow-400 text-[#00377B]"
-                        : "text-white/60 hover:text-white"
+                    className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${filter === "global"
+                        ? "bg-accent text-primary shadow-lg"
+                        : "text-white/40 hover:text-white"
                         }`}
                 >
                     GLOBAL
                 </button>
                 <button
                     onClick={() => setFilter("local")}
-                    className={`flex-1 py-1 text-xs font-bold rounded-md transition-all ${filter === "local"
-                        ? "bg-yellow-400 text-[#00377B]"
-                        : "text-white/60 hover:text-white"
+                    className={`flex-1 py-1.5 text-xs font-black rounded-lg transition-all ${filter === "local"
+                        ? "bg-accent text-primary shadow-lg"
+                        : "text-white/40 hover:text-white"
                         }`}
                 >
                     {currentUser?.country ? currentUser.country.toUpperCase() : "PAÍS"}
                 </button>
             </div>
-            <Card className="bg-[#00377B] text-white p-4 mb-4 border-none shadow-lg sticky top-0 z-10">
-                <div className="grid grid-cols-[1fr_3fr_1fr_1fr] gap-2 items-center text-xs font-bold opacity-80 uppercase tracking-widest mb-0">
+
+            <Card className="glass text-white p-4 sticky top-4 z-10 border-none shadow-2xl">
+                <div className="grid grid-cols-[1fr_3fr_1fr_1fr] gap-2 items-center text-[10px] font-black opacity-40 uppercase tracking-[0.2em]">
                     <span className="text-center">Pos</span>
                     <span>Jugador</span>
-                    <span className="text-center" title="Marcadores Exactos">M.E.</span>
+                    <span className="text-center">ME</span>
                     <span className="text-right">Pts</span>
                 </div>
             </Card>
 
-            {sortedUsers.map((user, index) => (
-                <div
-                    key={index}
-                    className={`grid grid-cols-[1fr_3fr_1fr_1fr] gap-2 items-center p-3 rounded-lg mb-2 text-white ${user.email === currentUser?.email
-                        ? "bg-yellow-400/20 border border-yellow-400"
-                        : "bg-white/5"
-                        }`}
-                >
-                    <span className="font-bold text-xl text-center">{index + 1}</span>
-                    <div className="flex flex-col min-w-0">
-                        <span className="font-bold uppercase truncate">{user.name}</span>
-                        <div className="flex items-center space-x-2 text-xs text-gray-300">
-                            <div className="relative w-5 h-3.5 shrink-0">
-                                {COUNTRY_FLAG_MAP[user.country] ? (
-                                    <Image
-                                        src={`https://flagcdn.com/w40/${COUNTRY_FLAG_MAP[user.country]}.png`}
-                                        alt={user.country}
-                                        fill
-                                        sizes="20px"
-                                        className="object-cover rounded-[1px]"
-                                    />
-                                ) : <span>🏳️</span>}
+            <div className="space-y-2">
+                {sortedUsers.map((user, index) => (
+                    <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        key={user.email}
+                        className={`grid grid-cols-[1fr_3fr_1fr_1fr] gap-2 items-center p-3 rounded-xl transition-all border ${user.email === currentUser?.email
+                            ? "bg-accent/10 border-accent/30 shadow-[0_0_20px_rgba(250,204,21,0.1)]"
+                            : "bg-white/5 border-white/5 hover:border-white/10"
+                            }`}
+                    >
+                        <span className={`font-black text-xl text-center ${index < 3 ? 'text-accent' : 'text-white/40'}`}>
+                            {index + 1}
+                        </span>
+                        <div className="flex flex-col min-w-0">
+                            <span className="font-bold uppercase truncate text-sm text-white/90">{user.name}</span>
+                            <div className="flex items-center space-x-2 text-[10px] text-white/30 font-bold tracking-tighter">
+                                <div className="relative w-4 h-2.5 shrink-0 shadow-sm border border-white/5 rounded-[1px] overflow-hidden">
+                                    {COUNTRY_FLAG_MAP[user.country] ? (
+                                        <Image
+                                            src={`https://flagcdn.com/w40/${COUNTRY_FLAG_MAP[user.country]}.png`}
+                                            alt={user.country}
+                                            fill
+                                            sizes="16px"
+                                            className="object-cover"
+                                        />
+                                    ) : <span>🏳️</span>}
+                                </div>
+                                <span className="truncate">{user.country}</span>
                             </div>
-                            <span className="truncate hidden sm:inline">{user.country}</span>
                         </div>
-                    </div>
-                    <span className="font-bold text-lg text-center text-yellow-400/80">{user.exactMatches}</span>
-                    <span className="font-bold text-xl text-right">{user.points}</span>
-                </div>
-            ))}
+                        <span className="font-black text-base text-center text-accent/60">{user.exactMatches}</span>
+                        <span className="font-black text-lg text-right">{user.points}</span>
+                    </motion.div>
+                ))}
+            </div>
         </div>
     );
 }

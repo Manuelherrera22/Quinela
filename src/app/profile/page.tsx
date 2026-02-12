@@ -8,21 +8,23 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Match, Prediction } from "@/types";
+import { AppState } from "@/lib/store/types";
+import { ArrowLeft, Camera, Trophy, Target } from "lucide-react";
 
 export default function ProfilePage() {
     const router = useRouter();
-    const user = useStore((state) => state.user);
-    const predictions = useStore((state) => state.predictions);
-    const matches = useStore((state) => state.matches);
-    const settings = useStore((state) => state.settings);
-    const updateAvatar = useStore((state) => state.updateAvatar);
+    const user = useStore((state: AppState) => state.user);
+    const predictions = useStore((state: AppState) => state.predictions);
+    const matches = useStore((state: AppState) => state.matches);
+    const settings = useStore((state: AppState) => state.settings);
+    const updateAvatar = useStore((state: AppState) => state.updateAvatar);
     const [isUploading, setIsUploading] = useState(false);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        if (file.size > 2 * 1024 * 1024) {
             alert("La imagen es muy grande. Máximo 2MB.");
             return;
         }
@@ -33,21 +35,18 @@ export default function ProfilePage() {
     };
 
     useEffect(() => {
-        // Simple auth check
         if (!user) {
-            // Let InitStore finish
         }
     }, [user, router]);
 
     if (!user) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#00377B] text-white">
-                <Link href="/login" className="underline">Inicia Sesión</Link>
+            <div className="min-h-screen flex items-center justify-center bg-[#001a3d] text-white">
+                <Link href="/login" className="underline hover:text-yellow-400">Inicia Sesión</Link>
             </div>
         );
     }
 
-    // Sort predictions by match date
     const myPredictions = predictions
         .map(p => {
             const match = matches.find(m => m.id === p.matchId);
@@ -57,215 +56,203 @@ export default function ProfilePage() {
         .sort((a, b) => new Date(a.match.date).getTime() - new Date(b.match.date).getTime());
 
     return (
-        <div className="min-h-screen bg-[#00377B] pb-20 font-sans">
+        <div className="min-h-screen bg-[#001a3d] pb-20 font-sans">
             {/* Header */}
-            <div className="bg-[#002855] py-4 px-6 flex items-center justify-between text-white shadow-md">
-                <Link href="/dashboard" className="text-yellow-400 font-bold hover:text-yellow-300 transition-colors">
-                    ← Volver
+            <div className="bg-[#00377B]/90 backdrop-blur-md py-4 px-6 flex items-center justify-between text-white shadow-lg sticky top-0 z-20 border-b border-white/5">
+                <Link href="/dashboard" className="text-white/70 hover:text-white transition-colors flex items-center gap-2 group">
+                    <div className="bg-white/10 p-2 rounded-full group-hover:bg-white/20 transition-all">
+                        <ArrowLeft size={18} />
+                    </div>
+                    <span className="font-bold text-sm hidden md:inline">Volver al Dashboard</span>
                 </Link>
-                <h1 className="text-xl font-bold tracking-wider">MI PERFIL</h1>
-                <div className="w-8"></div> {/* Spacer */}
+                <h1 className="text-lg font-black tracking-widest uppercase">Mi Perfil</h1>
+                <div className="w-8"></div>
             </div>
 
-            <div className="max-w-md mx-auto p-4 space-y-6">
+            <div className="max-w-md md:max-w-5xl mx-auto p-4 space-y-6 md:space-y-8 mt-4 animate-fade-in">
 
-                {/* User Info Card */}
-                <Card className="p-6 bg-white rounded-xl text-black text-center shadow-lg border-t-8 border-yellow-500 relative overflow-visible mt-8">
-                    <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 group cursor-pointer" onClick={() => document.getElementById('avatar-input')?.click()}>
-                        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-yellow-500 overflow-hidden relative">
-                            {user.avatarUrl ? (
-                                <Image
-                                    src={user.avatarUrl}
-                                    alt="Avatar"
-                                    fill
-                                    className="object-cover"
-                                />
-                            ) : COUNTRY_FLAG_MAP[user.country] ? (
-                                <Image
-                                    src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[user.country]}.png`}
-                                    alt={user.country}
-                                    fill
-                                    className="object-cover"
-                                />
-                            ) : <span className="text-5xl">👤</span>}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Left Column: User Info & Stats */}
+                    <div className="space-y-6">
+                        {/* User Info Card */}
+                        <Card className="p-6 bg-white/5 border border-white/10 rounded-2xl text-center shadow-2xl relative overflow-visible mt-8 md:mt-0">
+                            <div className="w-24 h-24 md:w-32 md:h-32 bg-[#002a5e] rounded-full flex items-center justify-center shadow-xl border-4 border-yellow-400 mx-auto -mt-16 md:-mt-16 relative group cursor-pointer overflow-hidden transition-transform hover:scale-105" onClick={() => document.getElementById('avatar-input')?.click()}>
+                                {user.avatarUrl ? (
+                                    <Image src={user.avatarUrl} alt="Avatar" fill className="object-cover" />
+                                ) : COUNTRY_FLAG_MAP[user.country] ? (
+                                    <Image
+                                        src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[user.country]}.png`}
+                                        alt={user.country}
+                                        fill
+                                        className="object-cover"
+                                    />
+                                ) : <span className="text-5xl">👤</span>}
 
-                            {/* Overlay for hover */}
-                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="text-white text-xs font-bold">Cambiar</span>
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Camera className="text-white" size={24} />
+                                </div>
+
+                                {isUploading && (
+                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                                    </div>
+                                )}
                             </div>
+                            <input type="file" id="avatar-input" accept="image/*" className="hidden" onChange={handleFileChange} disabled={isUploading} />
 
-                            {/* Loading state */}
-                            {isUploading && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
-                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                            <div className="mt-4">
+                                <h2 className="text-2xl font-black text-white">{user.name}</h2>
+                                <p className="text-white/50 text-sm font-medium">{user.email}</p>
+                                <div className="inline-block mt-2 px-3 py-1 bg-white/10 rounded-full text-[10px] text-yellow-400 font-bold uppercase tracking-wider border border-white/5">
+                                    {user.country}
+                                </div>
+                            </div>
+                        </Card>
+
+                        {/* Stats Row */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <Card className="p-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl text-white text-center shadow-lg border-none relative overflow-hidden">
+                                <Trophy className="absolute -right-2 -bottom-2 text-white/10 w-16 h-16 rotate-[-15deg]" />
+                                <div className="relative z-10">
+                                    <div className="text-3xl md:text-4xl font-black">{user.points}</div>
+                                    <div className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest opacity-80 mt-1">Puntos Totales</div>
+                                </div>
+                            </Card>
+                            <Card className="p-4 bg-gradient-to-br from-green-500 to-emerald-700 rounded-2xl text-white text-center shadow-lg border-none relative overflow-hidden">
+                                <Target className="absolute -right-2 -bottom-2 text-white/10 w-16 h-16 rotate-[-15deg]" />
+                                <div className="relative z-10">
+                                    <div className="text-3xl md:text-4xl font-black">{user.exactMatches}</div>
+                                    <div className="text-[9px] md:text-[10px] uppercase font-bold tracking-widest opacity-80 mt-1">Exactos</div>
+                                </div>
+                            </Card>
+                        </div>
+
+                        {/* Champion Pick */}
+                        <Card className="p-6 bg-gradient-to-r from-[#00377B] to-[#001a3d] border border-white/10 rounded-2xl text-white shadow-xl relative overflow-hidden group">
+                            <div className="relative z-10">
+                                <div className="flex justify-between items-start mb-2">
+                                    <h3 className="text-xs font-bold text-blue-200 uppercase tracking-wider">Tu Campeón</h3>
+                                    <Link
+                                        href="/champion"
+                                        className="text-[10px] font-bold bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-colors"
+                                    >
+                                        CAMBIAR
+                                    </Link>
+                                </div>
+                                {user.selectedChampion ? (
+                                    <div className="flex items-center space-x-4">
+                                        <div className="relative w-16 h-10 shrink-0 shadow-lg transform group-hover:scale-105 transition-transform">
+                                            {COUNTRY_FLAG_MAP[user.selectedChampion] ? (
+                                                <Image
+                                                    src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[user.selectedChampion]}.png`}
+                                                    alt={user.selectedChampion}
+                                                    fill
+                                                    className="object-cover rounded-[2px]"
+                                                />
+                                            ) : <span className="text-5xl">🏳️</span>}
+                                        </div>
+                                        <div>
+                                            <div className="font-black text-xl md:text-2xl tracking-tight leading-none">{user.selectedChampion}</div>
+                                            {settings.champion === user.selectedChampion ? (
+                                                <div className="inline-block bg-yellow-400 text-[#00377B] text-[10px] px-2 py-0.5 rounded-full font-black mt-1 shadow-sm animate-pulse">
+                                                    +10 PUNTOS 🏆
+                                                </div>
+                                            ) : (
+                                                <div className="text-white/40 text-[10px] mt-1 font-medium">
+                                                    {settings.champion ? `Ganador: ${settings.champion}` : 'En juego'}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-white/40 italic text-sm">No has seleccionado campeón.</div>
+                                )}
+                            </div>
+                        </Card>
+                    </div>
+
+                    {/* Right Column: Prediction History */}
+                    <div className="md:col-span-2 space-y-4">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="h-8 w-1 bg-yellow-400 rounded-full"></div>
+                            <h3 className="text-white font-black text-lg tracking-wide uppercase">Historial de Predicciones</h3>
+                        </div>
+
+                        <div className="bg-white/5 border border-white/5 rounded-2xl p-4 md:p-6 min-h-[400px] overflow-y-auto max-h-[800px] backdrop-blur-sm">
+                            {myPredictions.length === 0 && (
+                                <div className="text-center py-20">
+                                    <p className="text-white/40 text-sm font-medium mb-4">No tienes predicciones registradas.</p>
+                                    <Link href="/dashboard" className="px-6 py-3 bg-yellow-400 text-[#00377B] font-black rounded-lg hover:bg-yellow-300 transition-colors">
+                                        IR A PREDECIR
+                                    </Link>
                                 </div>
                             )}
-                        </div>
-                        {/* Camera Icon Badge */}
-                        <div className="absolute bottom-0 right-0 bg-yellow-400 p-1.5 rounded-full shadow border-2 border-white text-[#00377B]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                        </div>
-                        <input
-                            type="file"
-                            id="avatar-input"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleFileChange}
-                            disabled={isUploading}
-                        />
-                    </div>
-                    <div className="mt-10">
-                        <h2 className="text-2xl font-bold text-[#00377B]">{user.name}</h2>
-                        <p className="text-gray-500 text-sm font-medium">{user.email}</p>
-                        <p className="text-gray-400 text-xs mt-1 uppercase tracking-wide">{user.country}</p>
-                    </div>
-                </Card>
 
-                {/* Stats Row */}
-                <div className="grid grid-cols-2 gap-4">
-                    <Card className="p-4 bg-white rounded-xl text-black text-center shadow border-b-4 border-blue-500">
-                        <div className="text-4xl font-black text-[#00377B]">{user.points}</div>
-                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">Puntos Totales</div>
-                    </Card>
-                    <Card className="p-4 bg-white rounded-xl text-black text-center shadow border-b-4 border-green-500">
-                        <div className="text-4xl font-black text-green-600">{user.exactMatches}</div>
-                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">Marcadores Exactos</div>
-                    </Card>
-                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {myPredictions.map(item => {
+                                    const match = item.match;
+                                    const isFinished = match.status === 'finished';
 
-                {/* Champion Pick */}
-                <Card className="p-6 bg-gradient-to-r from-blue-900 to-blue-800 rounded-xl text-white shadow-lg relative overflow-hidden">
-                    <div className="relative z-10">
-                        <h3 className="text-xs font-bold text-blue-200 uppercase mb-2">Tu Campeón</h3>
-                        {user.selectedChampion ? (
-                            <div className="flex items-center space-x-4">
-                                <div className="relative w-16 h-10 shrink-0 drop-shadow-lg">
-                                    {COUNTRY_FLAG_MAP[user.selectedChampion] ? (
-                                        <Image
-                                            src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[user.selectedChampion]}.png`}
-                                            alt={user.selectedChampion}
-                                            fill
-                                            className="object-cover rounded"
-                                        />
-                                    ) : <span className="text-5xl">🏳️</span>}
-                                </div>
-                                <div>
-                                    <div className="font-bold text-2xl tracking-tight">{user.selectedChampion}</div>
-                                    {settings.champion === user.selectedChampion ? (
-                                        <div className="inline-block bg-yellow-400 text-[#00377B] text-xs px-2 py-1 rounded-full font-bold mt-1 shadow-sm animate-pulse">
-                                            +10 PUNTOS 🏆
-                                        </div>
-                                    ) : (
-                                        <div className="text-blue-300 text-xs mt-1">
-                                            {settings.champion ? `Ganador real: ${settings.champion}` : 'Torneo en curso...'}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-blue-300 italic text-sm">No has seleccionado campeón.</div>
-                        )}
-                    </div>
-                    {/* Change Champion Button */}
-                    <div className="relative z-10 mt-4">
-                        <Link
-                            href="/champion"
-                            className="inline-block text-xs text-blue-200 hover:text-yellow-400 transition-colors underline underline-offset-2"
-                        >
-                            Cambiar selección →
-                        </Link>
-                    </div>
-                    {/* Background decoration */}
-                    <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
-                        <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                    </div>
-                </Card>
+                                    let statusClass = "bg-white/5 border-white/5 text-white/60";
+                                    let pointsBadge = null;
 
-                {/* Prediction History */}
-                <div className="space-y-4 pt-4">
-                    <h3 className="text-white font-bold text-lg px-2 border-l-4 border-yellow-500">Historial de Predicciones</h3>
+                                    if (isFinished && match.homeScore !== undefined && match.awayScore !== undefined) {
+                                        const predHome = item.homeScore;
+                                        const predAway = item.awayScore;
+                                        const realHome = match.homeScore;
+                                        const realAway = match.awayScore;
 
-                    {myPredictions.length === 0 && (
-                        <div className="bg-white/10 rounded-lg p-8 text-center backdrop-blur-sm">
-                            <p className="text-white/70 text-sm">No has hecho predicciones aún.</p>
-                            <Link href="/dashboard" className="inline-block mt-4 text-yellow-400 text-sm hover:underline">Ir a predecir matches →</Link>
-                        </div>
-                    )}
+                                        if (predHome === realHome && predAway === realAway) {
+                                            statusClass = "bg-green-500/10 border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.1)]";
+                                            pointsBadge = <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">+5 pts</span>;
+                                        } else {
+                                            const predWinner = predHome > predAway ? 'home' : (predHome < predAway ? 'away' : 'draw');
+                                            const realWinner = realHome > realAway ? 'home' : (realHome < realAway ? 'away' : 'draw');
+                                            if (predWinner === realWinner) {
+                                                statusClass = "bg-yellow-500/10 border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.1)]";
+                                                pointsBadge = <span className="bg-yellow-500 text-[#00377B] text-[10px] font-bold px-2 py-0.5 rounded-full">+3 pts</span>;
+                                            } else {
+                                                statusClass = "bg-red-500/10 border-red-500/30";
+                                                pointsBadge = <span className="bg-red-500/20 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full">0 pts</span>;
+                                            }
+                                        }
+                                    }
 
-                    {myPredictions.map(item => {
-                        const match = item.match;
-                        const isFinished = match.status === 'finished';
-
-                        let statusColor = "bg-white border-l-4 border-gray-300";
-                        let pointsEarned: number | null = null;
-                        let resultText = "Pendiente";
-
-                        if (isFinished && match.homeScore !== undefined && match.awayScore !== undefined) {
-                            const predHome = item.homeScore;
-                            const predAway = item.awayScore;
-                            const realHome = match.homeScore;
-                            const realAway = match.awayScore;
-
-                            if (predHome === realHome && predAway === realAway) {
-                                statusColor = "bg-green-50 border-l-4 border-green-500";
-                                pointsEarned = 5;
-                                resultText = "Exacto";
-                            } else {
-                                const predWinner = predHome > predAway ? 'home' : (predHome < predAway ? 'away' : 'draw');
-                                const realWinner = realHome > realAway ? 'home' : (realHome < realAway ? 'away' : 'draw');
-                                if (predWinner === realWinner) {
-                                    statusColor = "bg-yellow-50 border-l-4 border-yellow-400";
-                                    pointsEarned = 3;
-                                    resultText = "Acierto";
-                                } else {
-                                    statusColor = "bg-red-50 border-l-4 border-red-400";
-                                    pointsEarned = 0;
-                                    resultText = "Fallo";
-                                }
-                            }
-                        }
-
-                        return (
-                            <div key={item.matchId} className={`p-4 rounded-lg shadow-sm ${statusColor} items-stretch relative overflow-hidden transition-all hover:shadow-md`}>
-                                <div className="flex justify-between items-center mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                                    <span>{match.group ? `Grupo ${match.group}` : match.stage}</span>
-                                    {pointsEarned !== null ? (
-                                        <span className={`px-2 py-0.5 rounded ${pointsEarned > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                            +{pointsEarned} pts
-                                        </span>
-                                    ) : (
-                                        <span>{new Date(match.date).toLocaleDateString()}</span>
-                                    )}
-                                </div>
-
-                                <div className="flex justify-between items-center text-black">
-                                    {/* Home */}
-                                    <div className="flex flex-col items-center w-1/3 text-center">
-                                        <div className="text-2xl mb-1 filter drop-shadow-sm">{match.homeFlag}</div>
-                                        <span className="text-xs font-bold leading-tight line-clamp-2">{match.homeTeam}</span>
-                                    </div>
-
-                                    {/* Score */}
-                                    <div className="flex flex-col items-center w-1/3">
-                                        <div className="text-2xl font-black font-mono tracking-widest bg-gray-100 px-3 py-1 rounded-lg">
-                                            {item.homeScore}-{item.awayScore}
-                                        </div>
-                                        {isFinished && (
-                                            <div className="text-[10px] text-gray-500 mt-1 font-medium bg-gray-200 px-1.5 py-0.5 rounded">
-                                                Real: {match.homeScore}-{match.awayScore}
+                                    return (
+                                        <div key={item.matchId} className={`p-4 rounded-xl border ${statusClass} flex flex-col gap-3 hover:bg-white/10 transition-colors`}>
+                                            <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider opacity-70">
+                                                <span>{match.group ? `Grupo ${match.group}` : match.stage}</span>
+                                                {pointsBadge || <span>{new Date(match.date).toLocaleDateString()}</span>}
                                             </div>
-                                        )}
-                                    </div>
 
-                                    {/* Away */}
-                                    <div className="flex flex-col items-center w-1/3 text-center">
-                                        <div className="text-2xl mb-1 filter drop-shadow-sm">{match.awayFlag}</div>
-                                        <span className="text-xs font-bold leading-tight line-clamp-2">{match.awayTeam}</span>
-                                    </div>
-                                </div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex flex-col items-center w-1/3 gap-1">
+                                                    <span className="text-2xl">{match.homeFlag}</span>
+                                                    <span className="text-[10px] font-bold leading-tight text-center text-white/90">{match.homeTeam}</span>
+                                                </div>
+
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <div className="text-xl font-black tracking-widest bg-black/20 px-3 py-1 rounded-lg text-white">
+                                                        {item.homeScore}-{item.awayScore}
+                                                    </div>
+                                                    {isFinished && (
+                                                        <div className="text-[9px] text-white/40 font-mono">
+                                                            ({match.homeScore}-{match.awayScore})
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex flex-col items-center w-1/3 gap-1">
+                                                    <span className="text-2xl">{match.awayFlag}</span>
+                                                    <span className="text-[10px] font-bold leading-tight text-center text-white/90">{match.awayTeam}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        );
-                    })}
+                        </div>
+                    </div>
                 </div>
 
             </div>

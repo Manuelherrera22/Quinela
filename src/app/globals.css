@@ -1,49 +1,88 @@
 @import "tailwindcss";
 
 :root {
-  --background: #00377B;
+  --background: #001a3d;
   --foreground: #ffffff;
+  --primary: #00377B;
+  --accent: #facc15;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: radial-gradient(circle at top center, #004e9a 0%, #00377B 100%);
+  background: radial-gradient(circle at top left, #00377B 0%, #001a3d 100%);
   background-attachment: fixed;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Custom Text Selection */
 ::selection {
-  background-color: #facc15; /* yellow-400 */
-  color: #00377B;
+  background-color: var(--accent);
+  color: var(--primary);
 }
 
-/* Hide Scrollbar but allow scrolling */
+/* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
 }
+
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.1);
 }
+
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Safe Area for Bottom Nav */
 .safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
 }
 
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
