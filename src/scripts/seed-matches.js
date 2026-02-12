@@ -1,7 +1,40 @@
-import { Match } from "@/types";
-import { Group, COUNTRY_FLAG_MAP } from "@/lib/constants";
 
-export const INITIAL_MATCHES: (Match & { group?: Group })[] = [
+const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
+const fs = require('fs');
+
+// Load env vars
+const envPath = path.resolve(__dirname, '../../.env.local');
+let env = {};
+if (fs.existsSync(envPath)) {
+    const envFile = fs.readFileSync(envPath, 'utf8');
+    envFile.split('\n').forEach(line => {
+        const [key, value] = line.split('=');
+        if (key && value) env[key.trim()] = value.trim();
+    });
+}
+
+const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase credentials');
+    process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const COUNTRY_FLAG_MAP = {
+    "Mexico": "mx", "United States": "us", "Canada": "ca", "Costa Rica": "cr", "Panama": "pa", "Jamaica": "jm",
+    "El Salvador": "sv", "Honduras": "hn", "Nicaragua": "ni", "Guatemala": "gt", "Dominican Republic": "do",
+    "Argentina": "ar", "Brazil": "br", "Uruguay": "uy", "Colombia": "co", "Ecuador": "ec", "Chile": "cl", "Paraguay": "py", "Peru": "pe", "Venezuela": "ve", "Bolivia": "bo",
+    "France": "fr", "England": "gb-eng", "Spain": "es", "Germany": "de", "Portugal": "pt", "Netherlands": "nl", "Italy": "it", "Belgium": "be", "Croatia": "hr", "Denmark": "dk", "Switzerland": "ch", "Serbia": "rs", "Poland": "pl", "Sweden": "se", "Ukraine": "ua", "Scotland": "gb-sct", "Wales": "gb-wls",
+    "Morocco": "ma", "Senegal": "sn", "Nigeria": "ng", "Egypt": "eg", "Algeria": "dz", "Cameroon": "cm", "Mali": "ml", "Ivory Coast": "ci", "Tunisia": "tn", "Ghana": "gh", "South Africa": "za",
+    "Japan": "jp", "Iran": "ir", "South Korea": "kr", "Australia": "au", "Saudi Arabia": "sa", "Qatar": "qa", "Iraq": "iq", "Uzbekistan": "uz",
+    "New Zealand": "nz",
+};
+
+const INITIAL_MATCHES = [
     // ====== JORNADA 1 ======
     // Group A
     { id: 'a1', homeTeam: 'Mexico', awayTeam: 'South Africa', homeFlag: COUNTRY_FLAG_MAP['Mexico'], awayFlag: COUNTRY_FLAG_MAP['South Africa'], date: '2026-06-11T14:00:00', stage: 'group', group: 'A', status: 'open' },
@@ -113,7 +146,6 @@ export const INITIAL_MATCHES: (Match & { group?: Group })[] = [
     { id: 'k5', homeTeam: 'Algeria', awayTeam: 'New Zealand', homeFlag: COUNTRY_FLAG_MAP['Algeria'], awayFlag: COUNTRY_FLAG_MAP['New Zealand'], date: '2026-07-03T18:00:00', stage: 'group', group: 'K', status: 'open' },
     { id: 'k6', homeTeam: 'Ivory Coast', awayTeam: 'Qatar', homeFlag: COUNTRY_FLAG_MAP['Ivory Coast'], awayFlag: COUNTRY_FLAG_MAP['Qatar'], date: '2026-07-03T18:00:00', stage: 'group', group: 'K', status: 'open' },
     // Group L
-    // ====== JORNADA 3 (FINAL) ======
     { id: 'l5', homeTeam: 'Egypt', awayTeam: 'Uzbekistan', homeFlag: COUNTRY_FLAG_MAP['Egypt'], awayFlag: COUNTRY_FLAG_MAP['Uzbekistan'], date: '2026-07-04T12:00:00', stage: 'group', group: 'L', status: 'open' },
     { id: 'l6', homeTeam: 'Mali', awayTeam: 'Iraq', homeFlag: COUNTRY_FLAG_MAP['Mali'], awayFlag: COUNTRY_FLAG_MAP['Iraq'], date: '2026-07-04T12:00:00', stage: 'group', group: 'L', status: 'open' },
 
@@ -158,3 +190,41 @@ export const INITIAL_MATCHES: (Match & { group?: Group })[] = [
     // ====== FINAL ======
     { id: 'final', homeTeam: 'POR DEFINIR', awayTeam: 'POR DEFINIR', date: '2026-07-19T18:00:00', stage: 'f', status: 'open' },
 ];
+
+async function seedMatches() {
+    console.log('Seeding matches...');
+
+    // 1. Delete all matches (CAUTION: This will delete related predictions if cascade is on, or fail if not)
+    // To be safe, we will upsert. Upsert will update existing and insert new.
+    // However, if we want to ensure exact match with INITIAL_MATCHES, we might want to delete extra ones?
+    // Since we are adding matches, upsert is safe.
+    // But mappings are snake_case in DB, camelCase in object.
+
+    const matchesToInsert = INITIAL_MATCHES.map(m => ({
+        id: m.id,
+        home_team: m.homeTeam,
+        away_team: m.awayTeam,
+        home_flag: m.homeFlag,
+        away_flag: m.awayFlag,
+        date: m.date,
+        stage: m.stage,
+        group_name: m.group,
+        status: m.status,
+    }));
+
+    console.log(`Preparing to upsert ${matchesToInsert.length} matches...`);
+
+    const { error } = await supabase.from('matches').upsert(matchesToInsert, { onConflict: 'id' });
+
+    if (error) {
+        console.error('Error seeding matches:', error);
+    } else {
+        console.log('Matches seeded successfully!');
+
+        // Verify count
+        const { count } = await supabase.from('matches').select('*', { count: 'exact', head: true });
+        console.log(`Total matches in DB: ${count}`);
+    }
+}
+
+seedMatches();

@@ -35,35 +35,42 @@ export const createCommonSlice: StateCreator<AppState, [], [], CommonSlice> = (s
             const { data: settingsData } = await supabase.from('settings').select('*');
             const championSetting = settingsData?.find((s: any) => s.key === 'champion')?.value || null;
 
-            // 4. Restore Session from Supabase Auth
-            const { data: { session } } = await supabase.auth.getSession();
+            // 4. Restore Session from localStorage (custom auth)
+            let restoredEmail: string | null = null;
+            if (typeof window !== 'undefined') {
+                restoredEmail = localStorage.getItem('quiniela_user_email');
+            }
 
-            if (session?.user) {
-                const userEmail = session.user.email;
-                const profile = (users || []).find((u: any) => u.email === userEmail);
+            if (restoredEmail && !get().user) {
+                const profile = (users || []).find((u: any) => u.email === restoredEmail);
 
-                const mappedUser: User = {
-                    name: profile?.name || session.user.user_metadata?.full_name || '',
-                    country: profile?.country || session.user.user_metadata?.country || '',
-                    email: userEmail || '',
-                    points: profile?.points || 0,
-                    exactMatches: profile?.exact_matches || 0,
-                    selectedChampion: profile?.selected_champion,
-                    avatarUrl: profile?.avatar_url,
-                };
+                if (profile) {
+                    const mappedUser: User = {
+                        name: profile.name,
+                        country: profile.country,
+                        email: profile.email,
+                        points: profile.points || 0,
+                        exactMatches: profile.exact_matches || 0,
+                        selectedChampion: profile.selected_champion,
+                        avatarUrl: profile.avatar_url,
+                    };
 
-                const { data: predictions } = await supabase
-                    .from('predictions')
-                    .select('*')
-                    .eq('user_email', userEmail);
+                    const { data: predictions } = await supabase
+                        .from('predictions')
+                        .select('*')
+                        .eq('user_email', restoredEmail);
 
-                const mappedPredictions = (predictions || []).map((p: any) => ({
-                    matchId: p.match_id,
-                    homeScore: p.home_score,
-                    awayScore: p.away_score
-                }));
+                    const mappedPredictions = (predictions || []).map((p: any) => ({
+                        matchId: p.match_id,
+                        homeScore: p.home_score,
+                        awayScore: p.away_score
+                    }));
 
-                set({ user: mappedUser, predictions: mappedPredictions });
+                    set({ user: mappedUser, predictions: mappedPredictions });
+                } else {
+                    // User no longer exists in DB, clear stale session
+                    localStorage.removeItem('quiniela_user_email');
+                }
             }
 
             set({

@@ -43,3 +43,16 @@ export const GROUPS = [
 ] as const;
 
 export type Group = typeof GROUPS[number];
+
+export const ALLOWED_EMAILS = [
+    "@tigo.com.py",
+    "@tigo.com.hn",
+    "@tigo.com.sv",
+    "@tigo.com.gt",
+    "@tigo.com.bo",
+    "@tigo.com.co",
+    "@tigo.com",
+    "@millicom.com"
+];
+
+export const CHAMPION_LOCK_DATE = new Date('2026-06-11T14:00:00');

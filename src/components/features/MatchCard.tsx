@@ -10,6 +10,8 @@ import { COUNTRY_FLAG_MAP } from "@/lib/constants";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppState } from "@/lib/store/types";
+import { Confetti } from "@/components/ui/Confetti";
+import toast from "react-hot-toast";
 
 interface MatchCardProps {
     match: Match;
@@ -69,13 +71,19 @@ export function MatchCard({ match }: MatchCardProps) {
         }
     }, [existingPrediction]);
 
+    const [showConfetti, setShowConfetti] = useState(false);
+
     const handleSave = () => {
         if (homeScore === "" || awayScore === "") return;
         submitPrediction(match.id, parseInt(homeScore), parseInt(awayScore));
         setIsEditing(false);
+        vibrate(10);
+        setShowConfetti(true);
+        toast.success("¡Predicción guardada! 🎯");
+        setTimeout(() => setShowConfetti(false), 3500);
     };
 
-    const isLocked = match.status !== "open";
+    const isLocked = match.status !== "open" || new Date() >= new Date(match.date);
 
     const getPredictionResult = () => {
         if (match.status !== 'finished' || !existingPrediction || match.homeScore === undefined || match.awayScore === undefined) {
@@ -104,188 +112,191 @@ export function MatchCard({ match }: MatchCardProps) {
     const predictionResult = getPredictionResult();
 
     return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-        >
-            <Card className="mb-4 glass border-none text-white overflow-hidden shadow-2xl">
-                <div className="bg-white/5 p-2 text-[10px] text-center uppercase tracking-widest text-blue-200 flex items-center justify-center gap-2">
-                    <span className="font-bold">
-                        {new Date(match.date).toLocaleDateString("es-ES", {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "short",
-                        })} - {match.group ? `GRUPO ${match.group}` : match.stage}
-                    </span>
-                    {match.status === 'open' && countdown && (
-                        <span className="bg-yellow-400 text-[#00377B] px-2 py-0.5 rounded-full text-[9px] font-black">
-                            {countdown}
+        <>
+            <Confetti active={showConfetti} />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+            >
+                <Card className="mb-4 glass border-none text-white overflow-hidden shadow-2xl">
+                    <div className="bg-white/5 p-2 text-[10px] text-center uppercase tracking-widest text-blue-200 flex items-center justify-center gap-2">
+                        <span className="font-bold">
+                            {new Date(match.date).toLocaleDateString("es-ES", {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                            })} - {match.group ? `GRUPO ${match.group}` : match.stage}
                         </span>
-                    )}
-                    {match.status === 'locked' && match.homeScore === undefined && (
-                        <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-[9px] font-black animate-pulse">
-                            VIVO
-                        </span>
-                    )}
-                </div>
-
-                <div className="p-4 flex items-center justify-between gap-2">
-                    {/* Home Team */}
-                    <div className="flex flex-col items-center w-[30%]">
-                        <div className="relative w-10 h-7 mb-2 shadow-lg rounded-sm overflow-hidden border border-white/10">
-                            {COUNTRY_FLAG_MAP[match.homeTeam] ? (
-                                <Image
-                                    src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[match.homeTeam]}.png`}
-                                    alt={match.homeTeam}
-                                    fill
-                                    sizes="40px"
-                                    className="object-cover"
-                                />
-                            ) : <span className="text-xl">🏳️</span>}
-                        </div>
-                        <span className="text-[11px] font-bold text-center leading-tight h-[2.5em] flex items-center justify-center">
-                            {match.homeTeam}
-                        </span>
+                        {match.status === 'open' && countdown && (
+                            <span className="bg-yellow-400 text-[#00377B] px-2 py-0.5 rounded-full text-[9px] font-black">
+                                {countdown}
+                            </span>
+                        )}
+                        {match.status === 'locked' && match.homeScore === undefined && (
+                            <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-[9px] font-black animate-pulse">
+                                VIVO
+                            </span>
+                        )}
                     </div>
 
-                    {/* Scores */}
-                    <div className="flex flex-col items-center w-[40%]">
-                        <div className="flex items-center justify-center gap-2 sm:gap-4">
-                            {/* Home Score */}
-                            <div className="flex flex-col items-center">
-                                <AnimatePresence>
-                                    {isEditing && !isLocked && (
-                                        <motion.button
-                                            initial={{ opacity: 0, y: 5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 5 }}
-                                            onClick={() => { setHomeScore(String(Math.min(99, parseInt(homeScore || '0') + 1))); vibrate(10); }}
-                                            className="w-8 h-6 bg-accent text-primary rounded-t-lg font-black hover:bg-yellow-300 active:scale-90 transition-all"
-                                        >+</motion.button>
-                                    )}
-                                </AnimatePresence>
-                                <div className={cn(
-                                    "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl font-black rounded-lg transition-all shadow-inner",
-                                    isEditing && !isLocked ? "bg-white text-primary scale-110 shadow-accent/20" : "bg-black/40 text-white/50"
-                                )}>
-                                    {homeScore || '0'}
-                                </div>
-                                <AnimatePresence>
-                                    {isEditing && !isLocked && (
-                                        <motion.button
-                                            initial={{ opacity: 0, y: -5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -5 }}
-                                            onClick={() => { setHomeScore(String(Math.max(0, parseInt(homeScore || '0') - 1))); vibrate(10); }}
-                                            className="w-8 h-6 bg-white/20 text-white rounded-b-lg font-black hover:bg-white/30 active:scale-90 transition-all"
-                                        >−</motion.button>
-                                    )}
-                                </AnimatePresence>
+                    <div className="p-4 flex items-center justify-between gap-2">
+                        {/* Home Team */}
+                        <div className="flex flex-col items-center w-[30%]">
+                            <div className="relative w-10 h-7 mb-2 shadow-lg rounded-sm overflow-hidden border border-white/10">
+                                {COUNTRY_FLAG_MAP[match.homeTeam] ? (
+                                    <Image
+                                        src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[match.homeTeam]}.png`}
+                                        alt={match.homeTeam}
+                                        fill
+                                        sizes="40px"
+                                        className="object-cover"
+                                    />
+                                ) : <span className="text-xl">🏳️</span>}
                             </div>
-
-                            <span className="text-xl font-black text-accent/50">VS</span>
-
-                            {/* Away Score */}
-                            <div className="flex flex-col items-center">
-                                <AnimatePresence>
-                                    {isEditing && !isLocked && (
-                                        <motion.button
-                                            initial={{ opacity: 0, y: 5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 5 }}
-                                            onClick={() => { setAwayScore(String(Math.min(99, parseInt(awayScore || '0') + 1))); vibrate(10); }}
-                                            className="w-8 h-6 bg-accent text-primary rounded-t-lg font-black hover:bg-yellow-300 active:scale-90 transition-all"
-                                        >+</motion.button>
-                                    )}
-                                </AnimatePresence>
-                                <div className={cn(
-                                    "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl font-black rounded-lg transition-all shadow-inner",
-                                    isEditing && !isLocked ? "bg-white text-primary scale-110 shadow-accent/20" : "bg-black/40 text-white/50"
-                                )}>
-                                    {awayScore || '0'}
-                                </div>
-                                <AnimatePresence>
-                                    {isEditing && !isLocked && (
-                                        <motion.button
-                                            initial={{ opacity: 0, y: -5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -5 }}
-                                            onClick={() => { setAwayScore(String(Math.max(0, parseInt(awayScore || '0') - 1))); vibrate(10); }}
-                                            className="w-8 h-6 bg-white/20 text-white rounded-b-lg font-black hover:bg-white/30 active:scale-90 transition-all"
-                                        >−</motion.button>
-                                    )}
-                                </AnimatePresence>
-                            </div>
+                            <span className="text-[11px] font-bold text-center leading-tight h-[2.5em] flex items-center justify-center">
+                                {match.homeTeam}
+                            </span>
                         </div>
-                    </div>
 
-                    {/* Away Team */}
-                    <div className="flex flex-col items-center w-[30%]">
-                        <div className="relative w-10 h-7 mb-2 shadow-lg rounded-sm overflow-hidden border border-white/10">
-                            {COUNTRY_FLAG_MAP[match.awayTeam] ? (
-                                <Image
-                                    src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[match.awayTeam]}.png`}
-                                    alt={match.awayTeam}
-                                    fill
-                                    sizes="40px"
-                                    className="object-cover"
-                                />
-                            ) : <span className="text-xl">🏳️</span>}
-                        </div>
-                        <span className="text-[11px] font-bold text-center leading-tight h-[2.5em] flex items-center justify-center">
-                            {match.awayTeam}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Footer Controls */}
-                <div className="px-4 pb-4 flex justify-center">
-                    {!isLocked ? (
-                        <Button
-                            onClick={isEditing ? handleSave : () => setIsEditing(true)}
-                            className={cn(
-                                "rounded-full font-black px-8 transition-all active:scale-95",
-                                isEditing ? "bg-accent text-primary shadow-lg shadow-accent/20" : "bg-white/10 text-accent border border-accent/30 hover:bg-white/20"
-                            )}
-                        >
-                            {isEditing ? 'CONFIRMAR' : 'EDITAR'}
-                        </Button>
-                    ) : (
-                        <div className="flex flex-col items-center w-full">
-                            {match.status === 'finished' && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 5 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="text-center w-full"
-                                >
-                                    <div className="text-xl font-black text-accent mb-2">
-                                        {match.homeScore} - {match.awayScore}
+                        {/* Scores */}
+                        <div className="flex flex-col items-center w-[40%]">
+                            <div className="flex items-center justify-center gap-2 sm:gap-4">
+                                {/* Home Score */}
+                                <div className="flex flex-col items-center">
+                                    <AnimatePresence>
+                                        {isEditing && !isLocked && (
+                                            <motion.button
+                                                initial={{ opacity: 0, y: 5 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 5 }}
+                                                onClick={() => { setHomeScore(String(Math.min(99, parseInt(homeScore || '0') + 1))); vibrate(10); }}
+                                                className="w-8 h-6 bg-accent text-primary rounded-t-lg font-black hover:bg-yellow-300 active:scale-90 transition-all"
+                                            >+</motion.button>
+                                        )}
+                                    </AnimatePresence>
+                                    <div className={cn(
+                                        "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl font-black rounded-lg transition-all shadow-inner",
+                                        isEditing && !isLocked ? "bg-white text-primary scale-110 shadow-accent/20" : "bg-black/40 text-white/50"
+                                    )}>
+                                        {homeScore || '0'}
                                     </div>
-                                    {existingPrediction && predictionResult && (
-                                        <div className="bg-black/20 rounded-xl p-3 border border-white/5">
-                                            <div className="text-[9px] font-bold text-white/40 uppercase mb-1">Tu Predicción</div>
-                                            <div className="flex items-center justify-center gap-3">
-                                                <span className="text-sm font-black text-white/90">
-                                                    {existingPrediction.homeScore} - {existingPrediction.awayScore}
-                                                </span>
-                                                <span className={cn("text-[10px] font-black uppercase tracking-tighter", predictionResult.color)}>
-                                                    {predictionResult.label}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
-                                </motion.div>
-                            )}
-                            {match.status === 'locked' && match.homeScore === undefined && (
-                                <div className="text-xs font-bold text-red-400 animate-pulse tracking-widest uppercase">
-                                    Partido en progreso
+                                    <AnimatePresence>
+                                        {isEditing && !isLocked && (
+                                            <motion.button
+                                                initial={{ opacity: 0, y: -5 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -5 }}
+                                                onClick={() => { setHomeScore(String(Math.max(0, parseInt(homeScore || '0') - 1))); vibrate(10); }}
+                                                className="w-8 h-6 bg-white/20 text-white rounded-b-lg font-black hover:bg-white/30 active:scale-90 transition-all"
+                                            >−</motion.button>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
-                            )}
+
+                                <span className="text-xl font-black text-accent/50">VS</span>
+
+                                {/* Away Score */}
+                                <div className="flex flex-col items-center">
+                                    <AnimatePresence>
+                                        {isEditing && !isLocked && (
+                                            <motion.button
+                                                initial={{ opacity: 0, y: 5 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 5 }}
+                                                onClick={() => { setAwayScore(String(Math.min(99, parseInt(awayScore || '0') + 1))); vibrate(10); }}
+                                                className="w-8 h-6 bg-accent text-primary rounded-t-lg font-black hover:bg-yellow-300 active:scale-90 transition-all"
+                                            >+</motion.button>
+                                        )}
+                                    </AnimatePresence>
+                                    <div className={cn(
+                                        "w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-xl font-black rounded-lg transition-all shadow-inner",
+                                        isEditing && !isLocked ? "bg-white text-primary scale-110 shadow-accent/20" : "bg-black/40 text-white/50"
+                                    )}>
+                                        {awayScore || '0'}
+                                    </div>
+                                    <AnimatePresence>
+                                        {isEditing && !isLocked && (
+                                            <motion.button
+                                                initial={{ opacity: 0, y: -5 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -5 }}
+                                                onClick={() => { setAwayScore(String(Math.max(0, parseInt(awayScore || '0') - 1))); vibrate(10); }}
+                                                className="w-8 h-6 bg-white/20 text-white rounded-b-lg font-black hover:bg-white/30 active:scale-90 transition-all"
+                                            >−</motion.button>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
                         </div>
-                    )}
-                </div>
-            </Card>
-        </motion.div>
+
+                        {/* Away Team */}
+                        <div className="flex flex-col items-center w-[30%]">
+                            <div className="relative w-10 h-7 mb-2 shadow-lg rounded-sm overflow-hidden border border-white/10">
+                                {COUNTRY_FLAG_MAP[match.awayTeam] ? (
+                                    <Image
+                                        src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[match.awayTeam]}.png`}
+                                        alt={match.awayTeam}
+                                        fill
+                                        sizes="40px"
+                                        className="object-cover"
+                                    />
+                                ) : <span className="text-xl">🏳️</span>}
+                            </div>
+                            <span className="text-[11px] font-bold text-center leading-tight h-[2.5em] flex items-center justify-center">
+                                {match.awayTeam}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Footer Controls */}
+                    <div className="px-4 pb-4 flex justify-center">
+                        {!isLocked ? (
+                            <Button
+                                onClick={isEditing ? handleSave : () => setIsEditing(true)}
+                                className={cn(
+                                    "rounded-full font-black px-8 transition-all active:scale-95",
+                                    isEditing ? "bg-accent text-primary shadow-lg shadow-accent/20" : "bg-white/10 text-accent border border-accent/30 hover:bg-white/20"
+                                )}
+                            >
+                                {isEditing ? 'CONFIRMAR' : 'EDITAR'}
+                            </Button>
+                        ) : (
+                            <div className="flex flex-col items-center w-full">
+                                {match.status === 'finished' && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="text-center w-full"
+                                    >
+                                        <div className="text-xl font-black text-accent mb-2">
+                                            {match.homeScore} - {match.awayScore}
+                                        </div>
+                                        {existingPrediction && predictionResult && (
+                                            <div className="bg-black/20 rounded-xl p-3 border border-white/5">
+                                                <div className="text-[9px] font-bold text-white/40 uppercase mb-1">Tu Predicción</div>
+                                                <div className="flex items-center justify-center gap-3">
+                                                    <span className="text-sm font-black text-white/90">
+                                                        {existingPrediction.homeScore} - {existingPrediction.awayScore}
+                                                    </span>
+                                                    <span className={cn("text-[10px] font-black uppercase tracking-tighter", predictionResult.color)}>
+                                                        {predictionResult.label}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                                {match.status === 'locked' && match.homeScore === undefined && (
+                                    <div className="text-xs font-bold text-red-400 animate-pulse tracking-widest uppercase">
+                                        Partido en progreso
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </Card>
+            </motion.div>
+        </>
     );
 }

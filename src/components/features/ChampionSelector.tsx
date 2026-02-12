@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
-import { COUNTRIES, COUNTRY_FLAG_MAP } from "@/lib/constants";
+import { COUNTRIES, COUNTRY_FLAG_MAP, CHAMPION_LOCK_DATE } from "@/lib/constants";
 import Image from "next/image";
 import { AppState } from "@/lib/store/types";
+import { RulesModal } from "./RulesModal";
 
 export function ChampionSelector() {
     const router = useRouter();
@@ -18,10 +19,22 @@ export function ChampionSelector() {
     const [selected, setSelected] = useState<string | null>(user?.selectedChampion || null);
     const [searchTerm, setSearchTerm] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [showRules, setShowRules] = useState(false);
+
+    // Bloqueo de campeón: 11 de Junio 2026 14:00 (Inicio primer partido)
+    const now = new Date();
+    const isLocked = now >= CHAMPION_LOCK_DATE;
 
     const isChanging = !!user?.selectedChampion;
 
-    const handleConfirm = async () => {
+    const handleConfirmClick = () => {
+        if (selected && !isLocked) {
+            setShowRules(true);
+        }
+    };
+
+    const handleRulesAccept = async () => {
+        setShowRules(false);
         if (selected) {
             setIsLoading(true);
             await setChampion(selected);
@@ -37,6 +50,13 @@ export function ChampionSelector() {
 
     return (
         <div className="w-full max-w-md md:max-w-5xl space-y-6 flex flex-col h-[85vh] md:h-auto animate-fade-in">
+            <RulesModal
+                isOpen={showRules}
+                onClose={() => setShowRules(false)}
+                onAccept={handleRulesAccept}
+                mode="accept"
+            />
+
             <Card className="flex-1 flex flex-col p-6 glass border-none overflow-hidden shadow-2xl">
                 <div className="text-center mb-6">
                     <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-widest">
@@ -100,26 +120,34 @@ export function ChampionSelector() {
                     </div>
                 </div>
 
-                <div className="flex gap-3 mt-6 shrink-0 max-w-md mx-auto w-full">
-                    {isChanging && (
-                        <Button
-                            onClick={() => router.back()}
-                            className="flex-1 py-6 text-sm font-bold bg-white/10 hover:bg-white/20 text-white border border-white/10"
-                        >
-                            CANCELAR
-                        </Button>
-                    )}
-                    <Button
-                        onClick={handleConfirm}
-                        disabled={!selected || isLoading}
-                        className={cn(
-                            "bg-yellow-400 hover:bg-yellow-500 text-[#00377B] font-black py-6 text-lg disabled:opacity-50 transition-all active:scale-95 shadow-lg shadow-yellow-400/20",
-                            isChanging ? "flex-1" : "w-full"
+                {isLocked ? (
+                    <div className="w-full text-center p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+                        <p className="text-red-400 font-bold uppercase text-sm">
+                            La selección de campeón está cerrada
+                        </p>
+                    </div>
+                ) : (
+                    <div className="flex gap-3 mt-6 shrink-0 max-w-md mx-auto w-full">
+                        {isChanging && (
+                            <Button
+                                onClick={() => router.back()}
+                                className="flex-1 py-6 text-sm font-bold bg-white/10 hover:bg-white/20 text-white border border-white/10"
+                            >
+                                CANCELAR
+                            </Button>
                         )}
-                    >
-                        {isLoading ? 'GUARDANDO...' : 'CONFIRMAR SELECCIÓN'}
-                    </Button>
-                </div>
+                        <Button
+                            onClick={handleConfirmClick}
+                            disabled={!selected || isLoading}
+                            className={cn(
+                                "bg-yellow-400 hover:bg-yellow-500 text-[#00377B] font-black py-6 text-lg disabled:opacity-50 transition-all active:scale-95 shadow-lg shadow-yellow-400/20",
+                                isChanging ? "flex-1" : "w-full"
+                            )}
+                        >
+                            {isLoading ? 'GUARDANDO...' : 'CONFIRMAR SELECCIÓN'}
+                        </Button>
+                    </div>
+                )}
             </Card>
         </div>
     );

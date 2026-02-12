@@ -9,10 +9,14 @@ import { Tabs } from "@/components/ui/Tabs";
 import { MatchCard } from "@/components/features/MatchCard";
 import { Leaderboard } from "@/components/features/Leaderboard";
 import { StandingsTable } from "@/components/features/StandingsTable";
+import { RulesModal } from "@/components/features/RulesModal";
+import { CountdownTimer } from "@/components/features/CountdownTimer";
+import { BookOpen } from "lucide-react";
 import { Match } from "@/types";
 import { GROUPS } from "@/lib/constants";
 import { BottomNav } from "@/components/BottomNav";
 import { vibrate } from "@/lib/utils";
+import { Filter } from "lucide-react";
 import { LayoutGrid, Swords, Flame, Medal, Crown, LogOut, User, BarChart } from "lucide-react";
 import { AppState } from "@/lib/store/types";
 
@@ -26,8 +30,11 @@ export default function DashboardPage() {
     const logoutUser = useStore((state: AppState) => state.logoutUser);
 
     const [activeTab, setActiveTab] = useState("matches");
+    const [showRules, setShowRules] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<string>("all");
     const [selectedStage, setSelectedStage] = useState<string>("group");
+    const [showPendingOnly, setShowPendingOnly] = useState(false);
+    const predictions = useStore((state: AppState) => state.predictions);
 
     const filteredMatches = useMemo(() => {
         let filtered = matches.filter((m: Match) => {
@@ -41,8 +48,15 @@ export default function DashboardPage() {
         if (selectedStage === 'group' && selectedGroup !== 'all') {
             filtered = filtered.filter((m: any) => m.group === selectedGroup);
         }
+        if (showPendingOnly) {
+            filtered = filtered.filter(m => m.status === 'open' && !predictions.some(p => p.matchId === m.id));
+        }
         return filtered;
-    }, [matches, selectedGroup, selectedStage]);
+    }, [matches, selectedGroup, selectedStage, showPendingOnly, predictions]);
+
+    const pendingCount = useMemo(() => {
+        return matches.filter(m => m.status === 'open' && !predictions.some(p => p.matchId === m.id)).length;
+    }, [matches, predictions]);
 
     // Group filtered matches by Date
     const groupedMatches = useMemo(() => {
@@ -118,6 +132,7 @@ export default function DashboardPage() {
                         </nav>
                     </div>
 
+
                     {/* Desktop User Menu & Stats */}
                     <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
                         <div className="flex gap-4 text-white text-xs md:text-sm">
@@ -159,6 +174,7 @@ export default function DashboardPage() {
 
                 {/* Mobile Tabs Wrapper */}
                 <div className="md:hidden pb-4 mt-2">
+
                     <Tabs
                         activeTab={activeTab}
                         onTabChange={setActiveTab}
@@ -171,11 +187,16 @@ export default function DashboardPage() {
                 </div>
             </header>
 
+            <RulesModal
+                isOpen={showRules}
+                onClose={() => setShowRules(false)}
+            />
+
             {/* Main Content */}
             <div className="px-4 pt-6 max-w-md md:max-w-7xl mx-auto transition-all">
 
                 {/* Desktop Tabs/Filter Bar */}
-                <div className="hidden md:flex justify-center mb-8">
+                <div className="hidden md:flex justify-center mb-8 gap-4 items-center relative">
                     <Tabs
                         activeTab={activeTab}
                         onTabChange={setActiveTab}
@@ -186,10 +207,21 @@ export default function DashboardPage() {
                         ]}
                         className="bg-black/20"
                     />
+
+                    <button
+                        onClick={() => setShowRules(true)}
+                        className="absolute right-0 flex items-center gap-2 text-xs font-bold text-white/50 hover:text-yellow-400 transition-colors uppercase tracking-wider"
+                    >
+                        <BookOpen size={14} />
+                        Reglamento
+                    </button>
                 </div>
 
                 {activeTab === "matches" && (
                     <div className="space-y-6 animate-fade-in">
+                        {/* Countdown Timer */}
+                        <CountdownTimer />
+
                         {/* Stages Filter */}
                         <div className="flex flex-wrap gap-2 justify-center pb-2">
                             {stages.map(stage => {
@@ -210,6 +242,22 @@ export default function DashboardPage() {
                                 );
                             })}
                         </div>
+
+                        {/* Pending Filter */}
+                        {pendingCount > 0 && (
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={() => { setShowPendingOnly(!showPendingOnly); vibrate(5); }}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${showPendingOnly
+                                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                                        : 'bg-white/5 text-orange-400 hover:bg-white/10 border border-orange-500/30'
+                                        }`}
+                                >
+                                    <Filter size={14} />
+                                    Sin Predecir ({pendingCount})
+                                </button>
+                            </div>
+                        )}
 
                         {/* Groups Filter */}
                         {selectedStage === 'group' && (
@@ -288,6 +336,6 @@ export default function DashboardPage() {
             </div>
 
             <BottomNav />
-        </main>
+        </main >
     );
 }

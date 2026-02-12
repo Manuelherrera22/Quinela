@@ -2,7 +2,7 @@
 
 import { useStore } from "@/lib/store";
 import { Card } from "@/components/ui/Card";
-import { COUNTRY_FLAG_MAP } from "@/lib/constants";
+import { COUNTRY_FLAG_MAP, CHAMPION_LOCK_DATE } from "@/lib/constants";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,8 @@ export default function ProfilePage() {
     const settings = useStore((state: AppState) => state.settings);
     const updateAvatar = useStore((state: AppState) => state.updateAvatar);
     const [isUploading, setIsUploading] = useState(false);
+
+    const isLocked = new Date() >= CHAMPION_LOCK_DATE;
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -132,12 +134,14 @@ export default function ProfilePage() {
                             <div className="relative z-10">
                                 <div className="flex justify-between items-start mb-2">
                                     <h3 className="text-xs font-bold text-blue-200 uppercase tracking-wider">Tu Campeón</h3>
-                                    <Link
-                                        href="/champion"
-                                        className="text-[10px] font-bold bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-colors"
-                                    >
-                                        CAMBIAR
-                                    </Link>
+                                    {!isLocked && (
+                                        <Link
+                                            href="/champion"
+                                            className="text-[10px] font-bold bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-colors"
+                                        >
+                                            CAMBIAR
+                                        </Link>
+                                    )}
                                 </div>
                                 {user.selectedChampion ? (
                                     <div className="flex items-center space-x-4">

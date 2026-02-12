@@ -65,41 +65,59 @@ export function Leaderboard() {
             </Card>
 
             <div className="space-y-2">
-                {sortedUsers.map((user, index) => (
-                    <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        key={user.email}
-                        className={`grid grid-cols-[1fr_3fr_1fr_1fr] gap-2 items-center p-3 rounded-xl transition-all border ${user.email === currentUser?.email
-                            ? "bg-accent/10 border-accent/30 shadow-[0_0_20px_rgba(250,204,21,0.1)]"
-                            : "bg-white/5 border-white/5 hover:border-white/10"
-                            }`}
-                    >
-                        <span className={`font-black text-xl text-center ${index < 3 ? 'text-accent' : 'text-white/40'}`}>
-                            {index + 1}
-                        </span>
-                        <div className="flex flex-col min-w-0">
-                            <span className="font-bold uppercase truncate text-sm text-white/90">{user.name}</span>
-                            <div className="flex items-center space-x-2 text-[10px] text-white/30 font-bold tracking-tighter">
-                                <div className="relative w-4 h-2.5 shrink-0 shadow-sm border border-white/5 rounded-[1px] overflow-hidden">
-                                    {COUNTRY_FLAG_MAP[user.country] ? (
-                                        <Image
-                                            src={`https://flagcdn.com/w40/${COUNTRY_FLAG_MAP[user.country]}.png`}
-                                            alt={user.country}
-                                            fill
-                                            sizes="16px"
-                                            className="object-cover"
-                                        />
-                                    ) : <span>🏳️</span>}
+                {sortedUsers.map((user, index) => {
+                    let rankStyle = "text-white/40";
+                    let rowStyle = "bg-white/5 border-white/5 hover:border-white/10";
+
+                    if (index === 0) {
+                        rankStyle = "text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]";
+                        rowStyle = "bg-gradient-to-r from-yellow-400/10 to-transparent border-yellow-400/30";
+                    } else if (index === 1) {
+                        rankStyle = "text-gray-300 drop-shadow-[0_0_10px_rgba(209,213,219,0.5)]";
+                        rowStyle = "bg-gradient-to-r from-gray-300/10 to-transparent border-gray-300/30";
+                    } else if (index === 2) {
+                        rankStyle = "text-orange-400 drop-shadow-[0_0_10px_rgba(251,146,60,0.5)]";
+                        rowStyle = "bg-gradient-to-r from-orange-400/10 to-transparent border-orange-400/30";
+                    }
+
+                    const isCurrentUser = user.email === currentUser?.email;
+                    if (isCurrentUser) {
+                        rowStyle += " border-accent/50 shadow-[0_0_20px_rgba(250,204,21,0.1)]";
+                    }
+
+                    return (
+                        <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            key={user.email}
+                            className={`grid grid-cols-[1fr_3fr_1fr_1fr] gap-2 items-center p-3 rounded-xl transition-all border ${rowStyle}`}
+                        >
+                            <span className={`font-black text-xl text-center ${rankStyle}`}>
+                                {index + 1}
+                            </span>
+                            <div className="flex flex-col min-w-0">
+                                <span className={`font-bold uppercase truncate text-sm ${isCurrentUser ? "text-yellow-400" : "text-white/90"}`}>{user.name}</span>
+                                <div className="flex items-center gap-2 text-[10px] text-white/30 font-bold tracking-tighter">
+                                    <div className="relative w-4 h-2.5 shrink-0 shadow-sm border border-white/5 rounded-[1px] overflow-hidden">
+                                        {COUNTRY_FLAG_MAP[user.country] ? (
+                                            <Image
+                                                src={`https://flagcdn.com/w40/${COUNTRY_FLAG_MAP[user.country]}.png`}
+                                                alt={user.country}
+                                                fill
+                                                sizes="16px"
+                                                className="object-cover"
+                                            />
+                                        ) : <span>🏳️</span>}
+                                    </div>
+                                    <span className="truncate">{user.country}</span>
                                 </div>
-                                <span className="truncate">{user.country}</span>
                             </div>
-                        </div>
-                        <span className="font-black text-base text-center text-accent/60">{user.exactMatches}</span>
-                        <span className="font-black text-lg text-right">{user.points}</span>
-                    </motion.div>
-                ))}
+                            <span className="font-black text-base text-center text-accent/60">{user.exactMatches}</span>
+                            <span className="font-black text-lg text-right">{user.points}</span>
+                        </motion.div>
+                    );
+                })}
             </div>
         </div>
     );

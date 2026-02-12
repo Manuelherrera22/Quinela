@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
-import { REGISTRATION_COUNTRIES, COUNTRY_FLAG_MAP } from "@/lib/constants";
+import { REGISTRATION_COUNTRIES, COUNTRY_FLAG_MAP, ALLOWED_EMAILS } from "@/lib/constants";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
@@ -36,8 +36,15 @@ export function RegistrationForm() {
             return;
         }
 
-        if (password.length < 6) {
-            setError("La contraseña debe tener al menos 6 caracteres.");
+        // Validar dominios permitidos
+        const isValidDomain = ALLOWED_EMAILS.some(domain => email.endsWith(domain));
+        if (!isValidDomain) {
+            setError(`El correo debe ser de dominio Tigo (ej: ${ALLOWED_EMAILS[0]})`);
+            return;
+        }
+
+        if (password.length < 4) {
+            setError("La contraseña debe tener al menos 4 caracteres.");
             return;
         }
 
@@ -131,7 +138,7 @@ export function RegistrationForm() {
                         autoComplete="new-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder="Mínimo 4 caracteres"
                         className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-accent focus:ring-accent"
                     />
                 </div>

@@ -1,7 +1,6 @@
 import { StateCreator } from 'zustand';
 import { supabase } from '../supabase';
 import { AppState, MatchesSlice } from './types';
-import { INITIAL_MATCHES } from '../initial-data';
 
 export const createMatchesSlice: StateCreator<AppState, [], [], MatchesSlice> = (set, get) => ({
     matches: [],
@@ -17,30 +16,9 @@ export const createMatchesSlice: StateCreator<AppState, [], [], MatchesSlice> = 
             return;
         }
 
-        // Seed matches if empty
-        if (!matches || matches.length === 0) {
-            console.log('Seeding matches...');
-            const { error: seedError } = await supabase
-                .from('matches')
-                .insert(INITIAL_MATCHES.map(m => ({
-                    id: m.id,
-                    home_team: m.homeTeam,
-                    away_team: m.awayTeam,
-                    home_flag: m.homeFlag,
-                    away_flag: m.awayFlag,
-                    date: m.date,
-                    stage: m.stage,
-                    group_name: m.group,
-                    status: m.status,
-                    home_score: m.homeScore,
-                    away_score: m.awayScore
-                })));
 
-            if (!seedError) {
-                const res = await supabase.from('matches').select('*').order('date', { ascending: true });
-                matches = res.data;
-            }
-        }
+        // Removed auto-seeding logic to rely on manual seeding script
+        if (!matches) matches = [];
 
         const mappedMatches = (matches || []).map((m: any) => ({
             id: m.id,
