@@ -19,8 +19,8 @@ export function BottomNav() {
     const user = useStore((state) => state.user);
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#001d40]/90 backdrop-blur-xl border-t border-white/10 safe-area-bottom shadow-2xl md:hidden">
-            <div className="max-w-md mx-auto flex justify-around items-center py-3">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#001d40]/95 backdrop-blur-xl border-t border-white/10 shadow-2xl md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+            <div className="max-w-md mx-auto flex justify-around items-center py-1.5">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;
@@ -32,18 +32,14 @@ export function BottomNav() {
                             href={item.href}
                             onClick={() => vibrate(5)}
                             className={cn(
-                                "flex flex-col items-center gap-1 px-5 py-2 rounded-2xl transition-all relative",
+                                "flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all relative",
                                 isActive
                                     ? "text-yellow-400"
-                                    : "text-white/50 hover:text-white/80 hover:bg-white/5"
+                                    : "text-white/50 hover:text-white/80"
                             )}
                         >
-                            {isActive && (
-                                <div className="absolute inset-0 bg-yellow-400/10 blur-lg rounded-full" />
-                            )}
-
                             {isProfile && user?.avatarUrl ? (
-                                <div className={cn("relative w-6 h-6 rounded-full overflow-hidden border-2 transition-all duration-300", isActive ? "border-yellow-400 scale-110" : "border-white/50")}>
+                                <div className={cn("relative w-5 h-5 rounded-full overflow-hidden border-2 transition-all duration-300", isActive ? "border-yellow-400" : "border-white/50")}>
                                     <Image
                                         src={user.avatarUrl}
                                         alt="Avatar"
@@ -53,14 +49,13 @@ export function BottomNav() {
                                 </div>
                             ) : (
                                 <Icon
-                                    size={24}
+                                    size={20}
                                     strokeWidth={isActive ? 2.5 : 2}
-                                    className={cn("transition-transform duration-300", isActive && "scale-110")}
                                 />
                             )}
 
                             <span className={cn(
-                                "text-[10px] font-bold uppercase tracking-wider transition-all",
+                                "text-[9px] font-bold uppercase tracking-wider transition-all",
                                 isActive ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
                             )}>
                                 {item.label}
