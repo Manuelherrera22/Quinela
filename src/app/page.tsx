@@ -7,11 +7,11 @@ import { useStore } from "@/lib/store";
 export default function Home() {
   const router = useRouter();
   const user = useStore((state) => state.user);
+  const isLoading = useStore((state) => state.isLoading);
 
   useEffect(() => {
-    // If user is already registered, go to dashboard (or champion selection if not selected)
-    // For now, let's say if user exists, go to Dashboard.
-    // If not, go to Register.
+    if (isLoading) return; // Wait for initial data and session restoration
+
     if (user) {
       if (!user.selectedChampion) {
         router.push("/champion");
@@ -21,7 +21,7 @@ export default function Home() {
     } else {
       router.push("/register");
     }
-  }, [user, router]);
+  }, [user, router, isLoading]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#00377B]">

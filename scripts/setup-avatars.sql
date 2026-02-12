@@ -13,13 +13,12 @@ CREATE POLICY "Avatar images are publicly accessible"
 ON storage.objects FOR SELECT 
 USING ( bucket_id = 'avatars' );
 
--- Allow authenticated users to upload their own avatar
--- (Simplification: Allow auth users to upload any file to avatars for now, 
--- ideally matched by folder name = user_id)
-CREATE POLICY "Authenticated users can upload avatars" 
+-- Allow anyone to upload avatars (since we use custom auth)
+CREATE POLICY "Public can upload avatars" 
 ON storage.objects FOR INSERT 
-WITH CHECK ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
+WITH CHECK ( bucket_id = 'avatars' );
 
-CREATE POLICY "Users can update their own avatars" 
+CREATE POLICY "Public can update avatars" 
 ON storage.objects FOR UPDATE
-USING ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
+USING ( bucket_id = 'avatars' );
+

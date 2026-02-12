@@ -60,7 +60,7 @@ export function LoginForm() {
                 return;
             }
 
-            loginUser(email);
+            await loginUser(email);
             router.push("/dashboard");
         } catch {
             setError("Error al iniciar sesión. Intenta de nuevo.");
