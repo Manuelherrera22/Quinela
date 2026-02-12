@@ -6,7 +6,7 @@ import { COUNTRY_FLAG_MAP } from "@/lib/constants";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Match, Prediction } from "@/types";
 
 export default function ProfilePage() {
@@ -15,12 +15,27 @@ export default function ProfilePage() {
     const predictions = useStore((state) => state.predictions);
     const matches = useStore((state) => state.matches);
     const settings = useStore((state) => state.settings);
+    const updateAvatar = useStore((state) => state.updateAvatar);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) { // 2MB limit
+            alert("La imagen es muy grande. Máximo 2MB.");
+            return;
+        }
+
+        setIsUploading(true);
+        await updateAvatar(file);
+        setIsUploading(false);
+    };
 
     useEffect(() => {
         // Simple auth check
         if (!user) {
-            // Let InitStore finish, but if still null after a delay, redirect
-            // Actually, simplest is just to show loading or empty state until user is populated
+            // Let InitStore finish
         }
     }, [user, router]);
 
@@ -56,15 +71,48 @@ export default function ProfilePage() {
 
                 {/* User Info Card */}
                 <Card className="p-6 bg-white rounded-xl text-black text-center shadow-lg border-t-8 border-yellow-500 relative overflow-visible mt-8">
-                    <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-yellow-500 overflow-hidden">
-                        {COUNTRY_FLAG_MAP[user.country] ? (
-                            <Image
-                                src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[user.country]}.png`}
-                                alt={user.country}
-                                fill
-                                className="object-cover"
-                            />
-                        ) : <span className="text-5xl">👤</span>}
+                    <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 group cursor-pointer" onClick={() => document.getElementById('avatar-input')?.click()}>
+                        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-yellow-500 overflow-hidden relative">
+                            {user.avatarUrl ? (
+                                <Image
+                                    src={user.avatarUrl}
+                                    alt="Avatar"
+                                    fill
+                                    className="object-cover"
+                                />
+                            ) : COUNTRY_FLAG_MAP[user.country] ? (
+                                <Image
+                                    src={`https://flagcdn.com/w160/${COUNTRY_FLAG_MAP[user.country]}.png`}
+                                    alt={user.country}
+                                    fill
+                                    className="object-cover"
+                                />
+                            ) : <span className="text-5xl">👤</span>}
+
+                            {/* Overlay for hover */}
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-white text-xs font-bold">Cambiar</span>
+                            </div>
+
+                            {/* Loading state */}
+                            {isUploading && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                                </div>
+                            )}
+                        </div>
+                        {/* Camera Icon Badge */}
+                        <div className="absolute bottom-0 right-0 bg-yellow-400 p-1.5 rounded-full shadow border-2 border-white text-[#00377B]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        </div>
+                        <input
+                            type="file"
+                            id="avatar-input"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleFileChange}
+                            disabled={isUploading}
+                        />
                     </div>
                     <div className="mt-10">
                         <h2 className="text-2xl font-bold text-[#00377B]">{user.name}</h2>

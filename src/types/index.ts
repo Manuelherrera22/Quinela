@@ -6,6 +6,7 @@ export interface User {
     selectedChampion?: string;
     points: number;
     exactMatches: number;
+    avatarUrl?: string;
 }
 
 export interface Match {

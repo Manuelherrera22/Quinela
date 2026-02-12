@@ -167,6 +167,7 @@ interface AppState {
     updateMatchResult: (matchId: string, homeScore: number, awayScore: number) => Promise<void>;
     recalculatePoints: () => Promise<void>;
     checkMatchStatus: () => Promise<void>;
+    updateAvatar: (file: File) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -247,6 +248,7 @@ export const useStore = create<AppState>((set, get) => ({
             points: u.points,
             exactMatches: u.exact_matches,
             selectedChampion: u.selected_champion,
+            avatarUrl: u.avatar_url,
             password: u.password // Keeping for now as per plan
         }));
 
@@ -302,6 +304,7 @@ export const useStore = create<AppState>((set, get) => ({
             points: user.points,
             exactMatches: user.exact_matches,
             selectedChampion: user.selected_champion,
+            avatarUrl: user.avatar_url,
             password: user.password
         };
 
@@ -513,5 +516,52 @@ export const useStore = create<AppState>((set, get) => ({
 
         // Refresh
         get().fetchInitialData();
+    },
+
+    updateAvatar: async (file: File) => {
+        const { user } = get();
+        if (!user) return;
+
+        // 1. Upload to Storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, file);
+
+        if (uploadError) {
+            console.error('Error uploading avatar:', uploadError);
+            toast.error('Error al subir la imagen.');
+            return;
+        }
+
+        // 2. Get Public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+
+        // 3. Update User in DB
+        const { error: dbError } = await supabase
+            .from('users')
+            .update({ avatar_url: publicUrl })
+            .eq('email', user.email);
+
+        if (dbError) {
+            console.error('Error updating user avatar:', dbError);
+            toast.error('Error al actualizar perfil.');
+            return;
+        }
+
+        // 4. Update Local State
+        set((state) => ({
+            user: state.user ? { ...state.user, avatarUrl: publicUrl } : null
+        }));
+
+        // Also update the users list so leaderboard reflects it
+        get().fetchInitialData();
+
+        toast.success('Foto de perfil actualizada 📸');
     }
 }));

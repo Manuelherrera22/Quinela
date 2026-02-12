@@ -11,8 +11,12 @@ const navItems = [
     { href: "/profile", label: "Perfil", icon: UserCircle },
 ];
 
+import Image from "next/image";
+import { useStore } from "@/lib/store";
+
 export function BottomNav() {
     const pathname = usePathname();
+    const user = useStore((state) => state.user);
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#001d40]/90 backdrop-blur-xl border-t border-white/10 safe-area-bottom shadow-2xl">
@@ -20,6 +24,8 @@ export function BottomNav() {
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;
+                    const isProfile = item.href === "/profile";
+
                     return (
                         <Link
                             key={item.href}
@@ -35,11 +41,24 @@ export function BottomNav() {
                             {isActive && (
                                 <div className="absolute inset-0 bg-yellow-400/10 blur-lg rounded-full" />
                             )}
-                            <Icon
-                                size={24}
-                                strokeWidth={isActive ? 2.5 : 2}
-                                className={cn("transition-transform duration-300", isActive && "scale-110")}
-                            />
+
+                            {isProfile && user?.avatarUrl ? (
+                                <div className={cn("relative w-6 h-6 rounded-full overflow-hidden border-2 transition-all duration-300", isActive ? "border-yellow-400 scale-110" : "border-white/50")}>
+                                    <Image
+                                        src={user.avatarUrl}
+                                        alt="Avatar"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </div>
+                            ) : (
+                                <Icon
+                                    size={24}
+                                    strokeWidth={isActive ? 2.5 : 2}
+                                    className={cn("transition-transform duration-300", isActive && "scale-110")}
+                                />
+                            )}
+
                             <span className={cn(
                                 "text-[10px] font-bold uppercase tracking-wider transition-all",
                                 isActive ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
