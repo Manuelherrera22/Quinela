@@ -408,7 +408,7 @@ export default function AdminPage() {
                                         Seleccionar País
                                     </label>
                                     <select
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-yellow-400/50"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-yellow-400/50 [&>option]:bg-[#001a3d]"
                                         value={selectedChampion}
                                         onChange={e => setSelectedChampion(e.target.value)}
                                     >
