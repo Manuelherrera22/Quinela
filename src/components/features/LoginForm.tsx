@@ -40,7 +40,11 @@ export function LoginForm() {
                 return;
             }
 
-            router.push("/dashboard");
+            if (email === "admin@quinela.com") {
+                router.push("/admin");
+            } else {
+                router.push("/dashboard");
+            }
         } catch (err: any) {
             console.error('Login error:', err);
             setError("Error al iniciar sesión. Intenta de nuevo.");

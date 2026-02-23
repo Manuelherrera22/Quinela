@@ -17,7 +17,7 @@ import { GROUPS } from "@/lib/constants";
 import { BottomNav } from "@/components/BottomNav";
 import { vibrate } from "@/lib/utils";
 import { Filter } from "lucide-react";
-import { LayoutGrid, Swords, Flame, Medal, Crown, LogOut, User, BarChart } from "lucide-react";
+import { LayoutGrid, Swords, Flame, Medal, Crown, LogOut, User, BarChart, Shield } from "lucide-react";
 import { AppState } from "@/lib/store/types";
 
 export default function DashboardPage() {
@@ -147,6 +147,15 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="flex items-center gap-3">
+                            {user?.email === 'admin@quinela.com' && (
+                                <Link
+                                    href="/admin"
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 rounded-full text-[10px] font-bold transition-all"
+                                >
+                                    <Shield size={12} />
+                                    PANEL ADMIN
+                                </Link>
+                            )}
                             <Link href="/profile" className="flex items-center gap-3 group">
                                 <div className="text-right hidden md:block">
                                     <div className="text-sm font-bold text-white group-hover:text-yellow-400 transition-colors">{user.name}</div>

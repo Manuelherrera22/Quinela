@@ -3,20 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn, vibrate } from "@/lib/utils";
-import { Trophy, ChartNoAxesCombined, UserCircle } from "lucide-react";
-
-const navItems = [
-    { href: "/dashboard", label: "Partidos", icon: Trophy },
-    { href: "/stats", label: "Stats", icon: ChartNoAxesCombined },
-    { href: "/profile", label: "Perfil", icon: UserCircle },
-];
-
+import { Trophy, ChartNoAxesCombined, UserCircle, Shield } from "lucide-react";
 import Image from "next/image";
 import { useStore } from "@/lib/store";
 
 export function BottomNav() {
     const pathname = usePathname();
     const user = useStore((state) => state.user);
+
+    const navItems = [
+        { href: "/dashboard", label: "Partidos", icon: Trophy },
+        { href: "/stats", label: "Stats", icon: ChartNoAxesCombined },
+        ...(user?.email === 'admin@quinela.com' ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
+        { href: "/profile", label: "Perfil", icon: UserCircle },
+    ];
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#001d40]/95 backdrop-blur-xl border-t border-white/10 shadow-2xl md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
