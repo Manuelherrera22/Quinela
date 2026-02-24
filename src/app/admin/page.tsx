@@ -160,9 +160,11 @@ export default function AdminPage() {
     const stageOptions = [
         { id: "all", label: "Todos" },
         { id: "group", label: "Grupos", icon: LayoutGrid },
-        { id: "r32", label: "Octavos" },
+        { id: "r32", label: "16avos" },
+        { id: "r16", label: "Octavos" },
         { id: "qf", label: "Cuartos", icon: Flame },
         { id: "sf", label: "Semis", icon: Medal },
+        { id: "3rd", label: "3er Puesto" },
         { id: "f", label: "Final", icon: Crown },
     ];
 

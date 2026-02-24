@@ -187,6 +187,9 @@ const INITIAL_MATCHES = [
     { id: 'sf-1', homeTeam: 'POR DEFINIR', awayTeam: 'POR DEFINIR', date: '2026-07-14T18:00:00', stage: 'sf', status: 'open' },
     { id: 'sf-2', homeTeam: 'POR DEFINIR', awayTeam: 'POR DEFINIR', date: '2026-07-15T18:00:00', stage: 'sf', status: 'open' },
 
+    // ====== TERCER PUESTO ======
+    { id: 'third-place', homeTeam: 'POR DEFINIR', awayTeam: 'POR DEFINIR', date: '2026-07-18T18:00:00', stage: '3rd', status: 'open' },
+
     // ====== FINAL ======
     { id: 'final', homeTeam: 'POR DEFINIR', awayTeam: 'POR DEFINIR', date: '2026-07-19T18:00:00', stage: 'f', status: 'open' },
 ];

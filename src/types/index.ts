@@ -16,7 +16,7 @@ export interface Match {
     homeFlag?: string;
     awayFlag?: string;
     date: string;
-    stage: "group" | "r32" | "r16" | "qf" | "sf" | "f";
+    stage: "group" | "r32" | "r16" | "qf" | "sf" | "3rd" | "f";
     status: "locked" | "open" | "finished";
     homeScore?: number;
     awayScore?: number;

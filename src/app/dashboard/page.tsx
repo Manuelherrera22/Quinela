@@ -17,7 +17,7 @@ import { GROUPS } from "@/lib/constants";
 import { BottomNav } from "@/components/BottomNav";
 import { vibrate } from "@/lib/utils";
 import { Filter } from "lucide-react";
-import { LayoutGrid, Swords, Flame, Medal, Crown, LogOut, User, BarChart, Shield } from "lucide-react";
+import { LayoutGrid, Swords, Flame, Medal, Crown, LogOut, User, BarChart, Shield, Target } from "lucide-react";
 import { AppState } from "@/lib/store/types";
 
 export default function DashboardPage() {
@@ -40,8 +40,10 @@ export default function DashboardPage() {
         let filtered = matches.filter((m: Match) => {
             if (selectedStage === 'group') return m.stage === 'group';
             if (selectedStage === 'r32') return m.stage === 'r32';
+            if (selectedStage === 'r16') return m.stage === 'r16';
             if (selectedStage === 'qf') return m.stage === 'qf';
             if (selectedStage === 'sf') return m.stage === 'sf';
+            if (selectedStage === '3rd') return m.stage === '3rd';
             if (selectedStage === 'f') return m.stage === 'f';
             return true;
         });
@@ -97,9 +99,11 @@ export default function DashboardPage() {
 
     const stages = [
         { id: 'group', label: 'Grupos', icon: LayoutGrid },
-        { id: 'r32', label: 'Octavos', icon: Swords },
+        { id: 'r32', label: '16avos', icon: Swords },
+        { id: 'r16', label: 'Octavos', icon: Target },
         { id: 'qf', label: 'Cuartos', icon: Flame },
         { id: 'sf', label: 'Semis', icon: Medal },
+        { id: '3rd', label: '3er Puesto', icon: Medal },
         { id: 'f', label: 'Final', icon: Crown },
     ];
 
